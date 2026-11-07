@@ -1,0 +1,13 @@
+dist/
+node_modules/
+data/
+*.exe
+*.dll
+*.pdb
+*.lib
+*.log
+__pycache__/
+*.pyc
+*.tmp
+!app/extension/data/
+!app/extension/data/**

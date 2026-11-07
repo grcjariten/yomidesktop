@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="YomiDesktop">
+  <defs>
+    <linearGradient id="tile" x2="1" y2="1">
+      <stop stop-color="#222744"/>
+      <stop offset="1" stop-color="#0c1123"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#tile)" stroke="#445179" stroke-width="3"/>
+  <path d="M53 29H40a11 11 0 0 0-11 11v13m46-24h13a11 11 0 0 1 11 11v13M29 75v13a11 11 0 0 0 11 11h13" fill="none" stroke="#8e9cfb" stroke-linecap="round" stroke-width="6"/>
+  <path d="M51 44h27M58 55h20M51 66h17" fill="none" stroke="#e5e9ff" stroke-linecap="round" stroke-width="6"/>
+  <path d="m71 70 10 34 6-13 15-6z" fill="#65e3cb" stroke="#151b32" stroke-linejoin="round" stroke-width="4"/>
+</svg>

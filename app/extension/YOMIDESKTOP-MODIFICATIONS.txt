@@ -1,0 +1,5 @@
+Yomitan 26.10.22.0 copied from the active Firefox extension.
+Chromium MV3 manifest and service-worker entry point from the installed Chrome package retained for Electron; original extension ID preserved.
+Desktop adapters added under desktop/.
+Only upstream JavaScript modification: suppress browser installation welcome tab in backend.js.
+All dictionary, morphology, rendering, audio, Anki, settings code remains upstream.

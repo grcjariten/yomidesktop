@@ -1,0 +1,12 @@
+/* Match Yomitan's popup frame; all dictionary content uses upstream CSS. */
+html::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  border: 1px solid #999;
+  pointer-events: none;
+  z-index: 2147483647;
+}
+html[data-theme=dark]::after { border-color: #666; }
+#desktop-ocr { position:fixed;bottom:7px;right:20px;z-index:1000;font:10px/1.4 sans-serif;letter-spacing:.04em;padding:2px 5px;border-radius:4px;background:#333c;color:#eee;pointer-events:none; }
+#desktop-ocr[hidden] { display:none; }

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'">
+  <title>YomiDesktop</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="polish.css">
+  <script defer src="home.js"></script>
+</head>
+<body>
+  <header>
+    <img src="icon.svg" width="44" height="44" alt="">
+    <div class="identity"><h1>YomiDesktop</h1><p>Japanese lookup for Windows</p></div>
+    <button id="toggle" class="pill" aria-pressed="true" disabled>Active</button>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <p class="eyebrow">LOOK UP A WORD</p>
+      <h2 id="hero-title">Point at Japanese text.<br>Press <kbd>Shift</kbd>.</h2>
+      <p>Get a definition where you’re reading. When an app only exposes pixels, local Japanese OCR takes over.</p>
+      <div class="hero-controls">
+        <p id="status" role="status">Starting YomiDesktop…</p>
+        <label class="check"><input type="checkbox" id="ocr-toggle" checked> Automatic OCR</label>
+      </div>
+      <p id="ocr-state" class="hint" role="status"></p>
+    </section>
+    <div class="cards">
+      <section aria-labelledby="dictionary-title">
+        <div class="section-title"><h3 id="dictionary-title">Dictionaries</h3><span id="dictionary-count" class="badge">0 installed</span></div>
+        <p id="dict-description">Import a Yomitan-format ZIP to start looking up words.</p>
+        <details id="dictionary-list" hidden><summary>Installed dictionaries</summary><ul id="dictionaries"></ul></details>
+        <div class="actions">
+          <button id="manage-dictionaries" disabled>Manage dictionaries</button>
+          <a href="https://yomitan.wiki/dictionaries/">Find dictionaries</a>
+        </div>
+        <p class="hint">Add your own term, frequency, or pitch accent dictionaries. The choice is yours.</p>
+      </section>
+      <section aria-labelledby="video-title">
+        <div class="section-title"><h3 id="video-title">Video</h3><span class="badge">Optional</span></div>
+        <p id="vlc-state" role="status">Checking for VLC…</p>
+        <button id="video" class="secondary" disabled>Open video in VLC</button>
+        <p class="hint">You can also use OCR on visible Japanese subtitles in other players.</p>
+      </section>
+    </div>
+    <section aria-labelledby="anki-title">
+      <div class="section-title"><h3 id="anki-title">Anki</h3><span id="anki-state" class="badge">Not connected</span></div>
+      <p>Save a word and its sentence from the popup. A starter note type is available, or you can map your own in engine settings.</p>
+      <details>
+        <summary>Set up AnkiConnect</summary>
+        <div class="form">
+          <label>Server URL<input id="anki-server" value="http://127.0.0.1:8765" autocomplete="off"></label>
+          <label>Deck<input id="anki-deck" value="YomiDesktop" autocomplete="off"></label>
+          <label>API key, if configured<input id="anki-key" type="password" autocomplete="off"></label>
+          <label class="check"><input type="checkbox" id="anki-definition" checked> Fill the Definition field from my dictionaries</label>
+          <div class="actions">
+            <button id="anki-test" class="secondary">Test connection</button>
+            <button id="anki-prepare" disabled>Set up starter cards</button>
+          </div>
+          <p id="anki-result" role="status"></p>
+        </div>
+      </details>
+    </section>
+    <footer>
+      <label class="check"><input type="checkbox" id="autostart"> Start with Windows</label>
+      <button id="settings" class="secondary" disabled>Yomitan engine settings</button>
+      <a href="https://github.com/yomidevs/yomitan">Powered by Yomitan · Unofficial</a>
+    </footer>
+    <p class="hint shortcut">Press Shift again or Esc to close the popup. Closing this window keeps YomiDesktop in the system tray.</p>
+  </main>
+</body>
+</html>

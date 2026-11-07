@@ -1,0 +1,11 @@
+{
+  "name": "yomidesktop",
+  "productName": "YomiDesktop",
+  "version": "1.4.0-beta.1",
+  "main": "main.cjs",
+  "license": "GPL-3.0-or-later",
+  "description": "Japanese lookup for Windows with local OCR and the Yomitan engine",
+  "scripts": {
+    "test": "node --test tests/core.test.cjs tests/popup-session.test.cjs"
+  }
+}
