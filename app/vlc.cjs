@@ -56,7 +56,7 @@ class VlcBridge{
     if(!packet.suppressed)return;
     delete packet.token;entries.set(key,{...packet,title:target.title});this.updateOverlay(packet.pid);
     if(this.owners.has(target.pid)||target.foreground||this.heldPid===packet.pid)this.showOverlay(target.pid);
-    if(!this.connected){this.connected=true;this.setStatus({vlc:'VLC connected. Point at a subtitle and press Shift.'});}
+    if(!this.connected){this.connected=true;this.setStatus({vlc:'VLC connected. Look up a word in the current subtitle.'});}
   }
   updateOverlay(pid){const w=this.overlays.get(pid);if(!w||w.isDestroyed())return;const packets=Array.from(this.events.get(pid)?.values()||[]);w.webContents.send('desktop:subtitle',packets);if(!packets.length)w.hide();}
   async cursor(point){

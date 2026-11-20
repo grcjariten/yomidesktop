@@ -49,7 +49,8 @@ public static class TextProbe {
     static volatile bool ocrEnabled=true;
     static volatile int contextExtent=200;
     static long sequence=0;
-    static int shiftPulse=0,escapePulse=0;
+    static volatile int scanKey=0x10;
+    static int scanPulse=0,escapePulse=0;
     static uint hookThreadId;
     static volatile bool keyboardHookReady=false;
     static KeyboardHook keyboardCallback=OnKeyboard;
@@ -58,9 +59,22 @@ public static class TextProbe {
     static bool LegacyWpf(uint pid){bool value;if(legacyWpf.TryGetValue(pid,out value))return value;value=false;try{foreach(ProcessModule m in Process.GetProcessById((int)pid).Modules)if(m.ModuleName.Equals("wpfgfx_v0400.dll",StringComparison.OrdinalIgnoreCase)){value=true;break;}}catch{}legacyWpf[pid]=value;return value;}
     static Dictionary<string,object> job;
     static AutoResetEvent ready=new AutoResetEvent(false);
+    static int ModifierKey(int key){
+        switch(key){
+            case 0xA0: case 0xA1: return 0x10;
+            case 0xA2: case 0xA3: return 0x11;
+            case 0xA4: case 0xA5: return 0x12;
+            case 0x5C: return 0x5B;
+            default: return key;
+        }
+    }
+    static bool KeyPressed(int key){
+        return (GetAsyncKeyState(key)&0x8000)!=0;
+    }
     static void CaptureShortcut(int key,long kind){
         if(kind==0x100||kind==0x104){
-            if(key==0x10||key==0xA0||key==0xA1)Interlocked.Exchange(ref shiftPulse,1);
+            int currentKey=scanKey;
+            if(currentKey!=0&&ModifierKey(key)==currentKey)Interlocked.Exchange(ref scanPulse,currentKey);
             else if(key==0x1B)Interlocked.Exchange(ref escapePulse,1);
         }
     }
@@ -212,6 +226,10 @@ public static class TextProbe {
             string line;while((line=Console.ReadLine())!=null) {
                 try{
                     var d=json.Deserialize<Dictionary<string,object>>(line);
+                    if(d.ContainsKey("scanKey")){
+                        int key=Convert.ToInt32(d["scanKey"]);
+                        if(key==0||key==0x10||key==0x11||key==0x12||key==0x5B)scanKey=key;
+                    }
                     if(d.ContainsKey("enabled"))enabled=Convert.ToBoolean(d["enabled"]);
                     if(d.ContainsKey("extent"))contextExtent=Math.Max(50,Math.Min(2000,Convert.ToInt32(d["extent"])));
                     if(d.ContainsKey("ocr"))ocrEnabled=Convert.ToBoolean(d["ocr"]);
@@ -232,13 +250,23 @@ public static class TextProbe {
         Send(new{kind="ready",protocol=1});
         int lx=Int32.MinValue,ly=0,px=Int32.MinValue,py=0;long gesture=0;bool previousShift=false,previousEsc=false,previousMouse=false;int lastWindows=Environment.TickCount-1000,lastHeart=Environment.TickCount-1000;
         IntPtr previousForeground=GetForegroundWindow();
+        int previousKey=-1;
         while(!exit) {
             POINT p;GetCursorPos(out p);
             IntPtr fg=GetForegroundWindow();if(fg!=previousForeground){uint fpid;GetWindowThreadProcessId(fg,out fpid);Send(new{kind="foreground",pid=fpid,hwnd=fg.ToInt64()});previousForeground=fg;}
-            bool shift=(GetAsyncKeyState(0x10)&0x8000)!=0,esc=(GetAsyncKeyState(0x1b)&0x8000)!=0;
-            bool shiftTap=Interlocked.Exchange(ref shiftPulse,0)!=0,escapeTap=Interlocked.Exchange(ref escapePulse,0)!=0;
+            int currentKey=scanKey;
+            if(currentKey!=previousKey){
+                previousShift=false;
+                previousKey=currentKey;
+                lx=Int32.MinValue;
+            }
+            bool automatic=currentKey==0;
+            bool shift=automatic?!KeyPressed(0x01):KeyPressed(currentKey)||(currentKey==0x5B&&KeyPressed(0x5C));
+            bool esc=KeyPressed(0x1B);
+            int pulse=Interlocked.Exchange(ref scanPulse,0);
+            bool shiftTap=pulse!=0&&pulse==currentKey,escapeTap=Interlocked.Exchange(ref escapePulse,0)!=0;
             if(p.X!=px||p.Y!=py){Send(new{kind="pointer-move",x=p.X,y=p.Y});px=p.X;py=p.Y;}
-            if(shiftTap||(!keyboardHookReady&&shift&&!previousShift)){gesture++;Send(new{kind="shift-down",gesture=gesture,x=p.X,y=p.Y});}
+            if(shiftTap||((automatic||!keyboardHookReady)&&shift&&!previousShift)){gesture++;Send(new{kind="shift-down",gesture=gesture,x=p.X,y=p.Y});}
             bool mouse=(GetAsyncKeyState(0x01)&0x8000)!=0;if(mouse&&!previousMouse)Send(new{kind="pointer-down",x=p.X,y=p.Y});previousMouse=mouse;
             if((esc&&!previousEsc)||escapeTap)Send(new{kind="escape"});previousEsc=esc;
             if((gesture>0||!keyboardHookReady)&&(shift||shiftTap)&&enabled&&(p.X!=lx||p.Y!=ly||!previousShift||shiftTap)) {

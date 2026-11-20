@@ -2,9 +2,16 @@
 
 const $ = (id) => document.getElementById(id);
 const host = window.desktopHost;
+const dictionarySetup = $('dictionary-setup');
+let setupShown = false;
 
 function update(status) {
   $('status').textContent = status.phase;
+  $('scan-key-prompt').hidden = !status.scanKeyLabel;
+  $('scan-key').textContent = status.scanKeyLabel;
+  $('dismiss-hint').textContent = status.scanKeyLabel
+    ? 'Press ' + status.scanKeyLabel + ' again or Esc to close the popup.'
+    : 'Press Esc to close the popup.';
   $('status').classList.toggle('error', Boolean(status.error));
   $('toggle').setAttribute('aria-pressed', String(status.enabled));
   $('toggle').textContent = status.enabled ? 'Active' : 'Paused';
@@ -15,6 +22,10 @@ function update(status) {
 
   const dictionaries = status.dictionaries;
   const hasDictionaries = dictionaries.length > 0;
+  if (status.engineReady && !hasDictionaries && !status.dictionarySetupDismissed && !setupShown) {
+    setupShown = true;
+    dictionarySetup.showModal();
+  }
   $('dictionary-count').textContent = `${dictionaries.length} installed`;
   $('dict-description').textContent = hasDictionaries
     ? 'Change dictionary order and preferences in engine settings.'
@@ -50,6 +61,20 @@ $('video').onclick = () => host.command('open-video').catch((error) => {
 });
 $('autostart').onchange = () => host.command('start-at-login', {enabled: $('autostart').checked});
 $('ocr-toggle').onchange = () => host.command('ocr-toggle', {enabled: $('ocr-toggle').checked});
+
+async function chooseDictionarySetup(choice) {
+  if (await host.command('dictionary-setup', {choice})) {
+    dictionarySetup.close();
+  }
+}
+
+for (const button of dictionarySetup.querySelectorAll('[data-setup-choice]')) {
+  button.onclick = () => chooseDictionarySetup(button.dataset.setupChoice);
+}
+dictionarySetup.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  void chooseDictionarySetup('skip');
+});
 
 for (const action of ['anki-test', 'anki-prepare']) {
   const button = $(action);

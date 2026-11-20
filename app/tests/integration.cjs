@@ -21,6 +21,23 @@ exports.run = async ({mainWindow, popup, bridge, lookup, data, setStatus}) => {
   const home = (script) => mainWindow.webContents.executeJavaScript(script);
   await until(() => home('document.querySelector("#manage-dictionaries")?.disabled === false'), 'Home did not initialize.');
   assert.equal(await home('document.documentElement.lang'), 'en');
+  await until(() => home('document.querySelector("#dictionary-setup")?.open'), 'First-run setup did not open.');
+  await home('document.querySelector("[data-setup-choice=recommended]").click()');
+  const recommended = await until(
+    () => BrowserWindow.getAllWindows().find((window) => window.webContents.getURL().includes('desktopSetup=recommended-dictionaries')),
+    'Recommended dictionaries did not open.',
+  );
+  await until(
+    () => recommended.webContents.executeJavaScript('!document.querySelector("#recommended-dictionaries-modal").hidden && Array.from(document.querySelectorAll("[data-import-url]")).some(button => button.dataset.importUrl.includes("jmdict-yomitan"))'),
+    'The Japanese dictionary catalog did not render.',
+  );
+  await recommended.webContents.executeJavaScript(`(() => {
+    const selector = document.querySelector('#main-scan-modifier-key');
+    selector.value = 'ctrl';
+    selector.dispatchEvent(new Event('change', {bubbles: true}));
+  })()`);
+  await until(() => home('document.querySelector("#scan-key").textContent === "Ctrl"'), 'The Windows lookup key did not follow scanning settings.');
+  recommended.close();
   await home('document.querySelector("#manage-dictionaries").click()');
   const settings = await until(
     () => BrowserWindow.getAllWindows().find((window) => window.webContents.getURL().endsWith('/settings.html#dictionaries')),
@@ -55,5 +72,5 @@ exports.run = async ({mainWindow, popup, bridge, lookup, data, setStatus}) => {
     await home('document.querySelector("#dictionary-list").open');
     fs.writeFileSync(path.join(screenshotDir, 'dashboard.png'), (await mainWindow.webContents.capturePage()).toPNG());
   }
-  fs.writeFileSync(path.join(data, 'self-test.json'), JSON.stringify({cleanProfile: true, english: true, zipImport: true, desktopLookup: true}, null, 2));
+  fs.writeFileSync(path.join(data, 'self-test.json'), JSON.stringify({cleanProfile: true, english: true, dictionaryWizard: true, configurableScanKey: true, zipImport: true, desktopLookup: true}, null, 2));
 };

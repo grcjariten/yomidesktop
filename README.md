@@ -8,8 +8,8 @@ YomiDesktop brings the [Yomitan](https://github.com/yomidevs/yomitan) dictionary
 
 1. Download the Windows x64 ZIP from [Releases](../../releases) and extract the entire archive.
 2. Open **YomiDesktop.exe**. This beta is unsigned, so Windows may show a publisher warning.
-3. Choose **Manage dictionaries → Import** and select a Yomitan-format ZIP. See the [Yomitan dictionary guide](https://yomitan.wiki/dictionaries/).
-4. Point at Japanese text and press **Shift**. Press **Shift** again or **Esc** to close the popup.
+3. Use the first-run setup to browse Yomitan’s recommended dictionaries or import your own Yomitan-format ZIP files.
+4. Point at Japanese text and press **Shift**. Press the lookup key again or **Esc** to close the popup. Change the key under **Yomitan engine settings → Scanning**.
 
 The dictionary list starts empty. You can import term, frequency, and pitch-accent dictionaries and set their order in the engine settings.
 

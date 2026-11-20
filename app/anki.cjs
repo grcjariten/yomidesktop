@@ -3,9 +3,26 @@
 const {localAnkiUrl}=require('./core.cjs');
 const modelName='YomiDesktop · Japanese';
 const fieldMarkers={Word:'{expression}',Reading:'{reading}',Furigana:'{furigana}',Definition:'',Sentence:'{sentence}',SentenceFurigana:'{sentence-furigana}',Audio:'{audio}',PitchAccent:'{pitch-accents}',Frequency:'{frequency-harmonic-rank}',Source:'{document-title}',URL:'{url}'};
-const css=`.card{font-family:'Yu Gothic','Meiryo',sans-serif;font-size:23px;line-height:1.65;text-align:left;color:#20232b;background:#fafaf8;max-width:800px;margin:0 auto;padding:30px 24px}.word{font-size:44px;font-weight:600;line-height:1.45}.context{font-size:24px;margin-top:22px;color:#555}.context b,.context strong{color:#246eae}.reading{font-size:19px;color:#666;margin:8px 0}.meaning{font-size:20px;margin:24px 0}.meta{font-size:14px;color:#777;margin-top:22px}ruby rt{font-size:.48em}.front ruby rt{visibility:hidden}.front ruby:hover rt{visibility:visible}img{max-width:100%;height:auto}.nightMode.card{color:#e8e9ed;background:#202126}.nightMode .context,.nightMode .reading{color:#b8bdc9}hr{border:0;border-top:1px solid #9995;margin:24px 0}ol,ul{padding-left:1.4em}.glossary-item{margin:.4em 0}a{color:#4c99d8}`;
-const front=`<div class="front"><div class="word">{{Word}}</div>{{#Sentence}}<div class="context">{{Sentence}}</div>{{/Sentence}}</div>`;
-const back=`<div class="word">{{furigana:Furigana}}</div><div class="reading">{{Reading}} {{Audio}}</div>{{#SentenceFurigana}}<div class="context">{{furigana:SentenceFurigana}}</div>{{/SentenceFurigana}}<hr><div class="meaning">{{Definition}}</div>{{#PitchAccent}}<div>{{PitchAccent}}</div>{{/PitchAccent}}<div class="meta">{{#Frequency}}Frequency: {{Frequency}}<br>{{/Frequency}}{{Source}}</div>`;
+const css = `
+.card {
+  font-family: "Yu Gothic", Meiryo, sans-serif;
+  font-size: 20px;
+  line-height: 1.6;
+  text-align: center;
+  padding: 20px;
+}
+.word { font-size: 40px; }
+.context { font-size: 23px; margin: 12px 0; }
+.reading { font-size: 17px; opacity: .8; }
+.meaning { max-width: 42em; margin: 16px auto; }
+.meta { font-size: 13px; opacity: .7; margin-top: 18px; overflow-wrap: anywhere; }
+ruby rt { font-size: .5em; }
+hr { border: 0; border-top: 1px solid currentColor; opacity: .2; margin: 18px auto; max-width: 42em; }
+img { max-width: 100%; height: auto; }
+ol, ul { text-align: left; }
+`;
+const front = `<div class="word">{{Word}}</div>`;
+const back=`<div class="word">{{furigana:Furigana}}</div><div class="reading">{{Reading}} {{Audio}}</div>{{#SentenceFurigana}}<div class="context">{{furigana:SentenceFurigana}}</div>{{/SentenceFurigana}}<hr><div class="meaning">{{Definition}}</div>{{#PitchAccent}}<div>{{PitchAccent}}</div>{{/PitchAccent}}{{#Frequency}}<div class="meta">Frequency: {{Frequency}}</div>{{/Frequency}}{{#Source}}<div class="meta">{{Source}}</div>{{/Source}}`;
 async function call(server,apiKey,action,params={},fetcher=fetch){
   const response=await fetcher(localAnkiUrl(server),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,version:6,...(apiKey?{key:apiKey}:{}),params}),signal:AbortSignal.timeout(7000)});
   if(!response.ok)throw new Error(`AnkiConnect: HTTP ${response.status}`);

@@ -21,4 +21,20 @@ function localAnkiUrl(value){
   const u=new URL(value);if(u.protocol!=='http:'||!['127.0.0.1','localhost','[::1]'].includes(u.hostname)||u.username||u.password)throw new Error('AnkiConnect deve essere un indirizzo HTTP locale.');return u.href;
 }
 function safeInside(root,file){const p=path.resolve(root,file);if(p!==root&&!p.startsWith(path.resolve(root)+path.sep))throw new Error('Percorso non valido');return p;}
-module.exports={clamp,placePopup,validateSource,contained,localAnkiUrl,safeInside};
+const scanKeys = {
+  '': {code: 0, label: ''},
+  shift: {code: 0x10, label: 'Shift'},
+  ctrl: {code: 0x11, label: 'Ctrl'},
+  alt: {code: 0x12, label: 'Alt'},
+  meta: {code: 0x5b, label: 'Windows'},
+};
+function desktopScanKey(inputs) {
+  const split = (value) => (value ?? '').trim().toLowerCase().split(/[,;\s]+/).filter(Boolean);
+  for (const {include, exclude, types} of inputs ?? []) {
+    if (!types?.mouse || split(exclude).join(' ') !== 'mouse0') continue;
+    const name = split(include).join(' ');
+    if (Object.hasOwn(scanKeys, name)) return scanKeys[name];
+  }
+  return scanKeys.shift;
+}
+module.exports={clamp,placePopup,validateSource,contained,localAnkiUrl,safeInside,desktopScanKey};

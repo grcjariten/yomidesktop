@@ -18,7 +18,7 @@
   <main>
     <section class="hero" aria-labelledby="hero-title">
       <p class="eyebrow">LOOK UP A WORD</p>
-      <h2 id="hero-title">Point at Japanese text.<br>Press <kbd>Shift</kbd>.</h2>
+      <h2 id="hero-title">Point at Japanese text.<span id="scan-key-prompt"><br>Press <kbd id="scan-key">Shift</kbd>.</span></h2>
       <p>Get a definition where you’re reading. When an app only exposes pixels, local Japanese OCR takes over.</p>
       <div class="hero-controls">
         <p id="status" role="status">Starting YomiDesktop…</p>
@@ -67,7 +67,16 @@
       <button id="settings" class="secondary" disabled>Yomitan engine settings</button>
       <a href="https://github.com/yomidevs/yomitan">Powered by Yomitan · Unofficial</a>
     </footer>
-    <p class="hint shortcut">Press Shift again or Esc to close the popup. Closing this window keeps YomiDesktop in the system tray.</p>
+    <p class="hint shortcut"><span id="dismiss-hint">Press Shift again or Esc to close the popup.</span> Closing this window keeps YomiDesktop in the system tray.</p>
   </main>
+  <dialog id="dictionary-setup" aria-labelledby="dictionary-setup-title">
+    <h2 id="dictionary-setup-title">Set up your dictionaries</h2>
+    <p>Start with a Japanese term dictionary from Yomitan’s recommended list. You can also add kanji, frequency, and pitch accent dictionaries.</p>
+    <div class="actions">
+      <button type="button" data-setup-choice="recommended" autofocus>Browse recommended dictionaries</button>
+      <button type="button" data-setup-choice="zip" class="secondary">Use my ZIP files</button>
+      <button type="button" data-setup-choice="skip" class="secondary">Skip for now</button>
+    </div>
+  </dialog>
 </body>
 </html>

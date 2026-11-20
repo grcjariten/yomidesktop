@@ -2,7 +2,7 @@
 'use strict';
 const {app,BrowserWindow,session,ipcMain,screen,Tray,Menu,nativeImage,dialog,shell,globalShortcut}=require('electron');
 const fs=require('node:fs');const path=require('node:path');const {spawn}=require('node:child_process');const readline=require('node:readline');
-const {placePopup,validateSource,contained,localAnkiUrl}=require('./core.cjs');
+const {placePopup,validateSource,contained,localAnkiUrl,desktopScanKey}=require('./core.cjs');
 const anki=require('./anki.cjs');
 const {PopupSession}=require('./popup-session.cjs');
 const root=process.env.YOMIDESKTOP_ROOT||(app.isPackaged?path.dirname(process.execPath):path.resolve(__dirname,'..'));
@@ -14,9 +14,18 @@ const preferencesFile=path.join(data,'preferences.json');
 try{preferences={...preferences,...JSON.parse(fs.readFileSync(preferencesFile,'utf8'))};}catch{}
 const savePrefs=()=>{const tmp=preferencesFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(preferences,null,2));fs.renameSync(tmp,preferencesFile);};
 let mainWindow,engine,popup,tray,native,extensionId,shuttingDown=false,engineReady=false,popupReady=false;
-let status={phase:'Avvio…',enabled:preferences.enabled,dictionaries:[],native:false,vlc:'Preparazione…',anki:preferences.ankiPrepared?'Starter cards ready':'Not connected',engineReady:false,vlcAvailable:false};
+let status={phase:'Avvio…',enabled:preferences.enabled,dictionaries:[],native:false,vlc:'Preparazione…',anki:preferences.ankiPrepared?'Starter cards ready':'Not connected',engineReady:false,vlcAvailable:false,dictionarySetupDismissed:Boolean(preferences.dictionarySetupDismissed),scanKeyLabel:'Shift'};
 let popupSize={width:400,height:250},scanLength=16,contextExtent=200,requestId=0,lastQueryKey='',lastCursor={x:0,y:0};
 let nativeBusySince=0,watchdog,vlcBridge,lastSourcePid=0,lastSourceWindow=0,lastUnsupported='';
+let scanKey = desktopScanKey();
+const scanHint = () => scanKey.label ? 'Point at Japanese text and press ' + scanKey.label + '.' : 'Point at Japanese text to look up a word.';
+function syncScanning(options) {
+  const next = desktopScanKey(options.scanning.inputs);
+  if (scanKey.code !== next.code) hidePopup();
+  scanKey = next;
+  scanLength = options.scanning.length;
+  contextExtent = options.sentenceParsing.scanExtent;
+}
 const ownerRequests=new Map();
 const popupSession=new PopupSession({visible:()=>Boolean(popup&&!popup.isDestroyed()&&popup.isVisible()),bounds:()=>popup.getBounds(),close:()=>hidePopup()});
 const logFile=path.join(data,'diagnostics.log');
@@ -38,7 +47,7 @@ function createMain(){
   if(!process.argv.includes('--background')&&!testMode)mainWindow.show();
 }
 function refreshTray(){
-  tray.setToolTip(`YomiDesktop · ${preferences.enabled?'Shift to look up':'Paused'}`);
+  tray.setToolTip(`YomiDesktop · ${preferences.enabled?(scanKey.label?scanKey.label+' to look up':'Automatic lookup'):'Paused'}`);
   tray.setContextMenu(Menu.buildFromTemplate([{label:'Open YomiDesktop',click:()=>mainWindow.show()},{label:'Active',type:'checkbox',checked:preferences.enabled,click:()=>toggleEnabled(!preferences.enabled)},{type:'separator'},{label:'Quit',click:()=>app.quit()}]));
 }
 function toggleEnabled(value){preferences.enabled=Boolean(value);savePrefs();if(native?.stdin.writable)native.stdin.write(JSON.stringify({enabled:preferences.enabled})+'\n');setStatus({enabled:preferences.enabled});if(!value)hidePopup();}
@@ -55,8 +64,8 @@ async function startEngine(){
   session.defaultSession.serviceWorkers.on('console-message',(_event,d)=>{if(d.level===3)log('engine-worker-error',d.message);});
   await engine.loadURL(`chrome-extension://${extensionId}/desktop/bridge.html`);await waitFor(engine,'Boolean(window.yomiBridge)');
   const options=await bridge('options');const current=options.profiles[options.profileCurrent].options;
-  popupSize={width:Math.max(300,Math.round(current.general.popupWidth*current.general.popupScalingFactor)),height:Math.max(200,Math.round(current.general.popupHeight*current.general.popupScalingFactor))};scanLength=current.scanning.length;contextExtent=current.sentenceParsing.scanExtent;
-  setStatus({dictionaries:await bridge('dictionaries'),phase:'Ready. Point at a word and press Shift.'});
+  popupSize={width:Math.max(300,Math.round(current.general.popupWidth*current.general.popupScalingFactor)),height:Math.max(200,Math.round(current.general.popupHeight*current.general.popupScalingFactor))};syncScanning(current);
+  setStatus({dictionaries:await bridge('dictionaries'),phase:scanHint(),scanKeyLabel:scanKey.label});
   popup=new BrowserWindow(windowOptions({width:popupSize.width,height:popupSize.height,frame:false,alwaysOnTop:true,skipTaskbar:true,resizable:true,minWidth:280,minHeight:180,hasShadow:true,focusable:true}));safeWeb(popup);
   popup.setAlwaysOnTop(true,'screen-saver');
   popup.webContents.on('console-message',(_event,d)=>{if(d.level==='error'||d.level===3)log('popup-error',d.message);});
@@ -65,7 +74,7 @@ async function startEngine(){
   popup.on('close',e=>{if(!shuttingDown){e.preventDefault();hidePopup();}});
   engineReady=true;sendOwnPids();
 }
-function sendOwnPids(){if(!native?.stdin?.writable)return;const pids=[process.pid,...BrowserWindow.getAllWindows().map(w=>w.webContents.getOSProcessId())];native.stdin.write(JSON.stringify({pids,enabled:preferences.enabled,extent:contextExtent,ocr:preferences.ocrEnabled})+'\n');}
+function sendOwnPids(){if(!native?.stdin?.writable)return;const pids=[process.pid,...BrowserWindow.getAllWindows().map(w=>w.webContents.getOSProcessId())];native.stdin.write(JSON.stringify({pids,enabled:preferences.enabled,extent:contextExtent,ocr:preferences.ocrEnabled,scanKey:scanKey.code})+'\n');}
 function requestOcr(event){if(!preferences.ocrEnabled||!native?.stdin?.writable||!popupSession.accepts(event))return;native.stdin.write(JSON.stringify({ocrPoint:{x:event.x,y:event.y,sequence:event.sequence,gesture:event.gesture,window:event.hwnd}})+'\n');}
 function hidePopup(){popupSession.reset();requestId++;lastQueryKey='';if(popup&&!popup.isDestroyed())popup.hide();vlcBridge?.release();}
 async function lookup(raw){
@@ -88,9 +97,9 @@ async function lookup(raw){
     const area=screen.getDisplayNearestPoint(p).workArea;
     popup.setBounds(placePopup(a,popupSize,area));popup.showInactive();popup.moveTop();
     popupSession.shown(anchor);
-    lastUnsupported='';setStatus({phase:'Ready. Point at a word and press Shift.',lastLookupMs:Date.now()-started});
+    lastUnsupported='';setStatus({phase:scanHint(),lastLookupMs:Date.now()-started});
     vlcBridge?.hold(source);
-  }catch(e){if(id!==requestId)return;hidePopup();log('lookup-error',errorMessage(e));setStatus({phase:'Lookup failed. Press Shift to try again.'});}
+  }catch(e){if(id!==requestId)return;hidePopup();log('lookup-error',errorMessage(e));setStatus({phase:'Lookup failed. ' + scanHint()});}
 }
 function startNative(){
   if(shuttingDown)return;
@@ -140,11 +149,24 @@ async function handleCommand(event,name,payload={}){
     case 'engine-sync':{
       if(event.sender!==engine?.webContents)return false;
       const options=await bridge('options'),p=options.profiles[options.profileCurrent].options;
-      scanLength=p.scanning.length;contextExtent=p.sentenceParsing.scanExtent;
+      syncScanning(p);
       popupSize={width:Math.max(300,Math.round(p.general.popupWidth*p.general.popupScalingFactor)),height:Math.max(200,Math.round(p.general.popupHeight*p.general.popupScalingFactor))};
-      sendOwnPids();setStatus({dictionaries:await bridge('dictionaries')});return true;
+      sendOwnPids();setStatus({dictionaries:await bridge('dictionaries'),phase:scanHint(),scanKeyLabel:scanKey.label});return true;
     }
     case 'status':return {...status,preferences:{...preferences,ankiKey:undefined},version:app.getVersion()};
+    case 'dictionary-setup': {
+      if (event.sender !== mainWindow?.webContents || !engineReady) return false;
+      if (payload.choice === 'skip') {
+        preferences.dictionarySetupDismissed = true;
+        savePrefs();
+        setStatus({dictionarySetupDismissed: true});
+        return true;
+      }
+      const modal = {recommended: 'recommended-dictionaries', zip: 'dictionaries'}[payload.choice];
+      if (modal !== 'recommended-dictionaries' && modal !== 'dictionaries') return false;
+      openEnginePage('chrome-extension://' + extensionId + '/settings.html?desktopSetup=' + modal + '#dictionaries');
+      return true;
+    }
     case 'toggle':toggleEnabled(payload.enabled);return status;
     case 'ocr-toggle':preferences.ocrEnabled=Boolean(payload.enabled);savePrefs();sendOwnPids();setStatus({ocr:preferences.ocrEnabled?(status.ocrAvailable?'Local Japanese OCR ready':'Local Japanese OCR unavailable'):'OCR off'});return true;
     case 'dictionaries':

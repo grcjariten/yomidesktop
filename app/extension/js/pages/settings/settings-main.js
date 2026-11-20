@@ -184,5 +184,9 @@ await Application.main(true, async (application) => {
 
     await Promise.all(preparePromises);
 
+    const desktopSetup = new URLSearchParams(location.search).get('desktopSetup');
+    if (desktopSetup === 'recommended-dictionaries' || desktopSetup === 'dictionaries') {
+        document.querySelector('[data-modal-action="show,' + desktopSetup + '"]')?.click();
+    }
     document.documentElement.dataset.loaded = 'true';
 });
