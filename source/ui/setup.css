@@ -1,0 +1,37 @@
+.steps{margin:0 0 0 auto;padding:0;display:flex;gap:6px;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;font-size:11px;color:#7e8a9e;padding:5px 10px;border-radius:20px;border:1px solid #ffffff12;margin:0}
+.steps li::before{content:counter(s) " · "}
+.steps li.done{color:#94ecc4;border-color:#4a9c7455}
+.steps li.current{color:#142236;background:#84b7f5;border-color:#84b7f5}
+.step{min-height:400px;padding:24px 26px}
+.step h2{margin-bottom:6px}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+.choice{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 10px;border:1px solid #ffffff1e;border-radius:12px;background:#ffffff05;cursor:pointer;text-align:center}
+.choice input{position:absolute;opacity:0;pointer-events:none}
+.choice kbd{font-size:24px;padding:4px 18px}
+.choice span{font-size:11px;color:#8d99ad;min-height:15px}
+.choice:has(input:checked){border-color:#84b7f5;background:#84b7f51a;box-shadow:0 0 0 1px #84b7f5}
+.choice:has(input:focus-visible){outline:2px solid #84b7f5;outline-offset:3px}
+.dict-list{list-style:none;padding:0;margin:14px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dict-list li{margin:0}
+.dict-list label{display:grid;grid-template-columns:18px 1fr auto;align-items:center;gap:9px;padding:8px 10px;height:100%;border:1px solid #ffffff12;border-radius:9px;background:#ffffff04;cursor:pointer;font-size:13px;color:#edf0f6}
+.dict-list small{display:block;color:#8d99ad;font-size:11px;margin-top:2px}
+.dict-list .tag{font-size:10px;color:#a8b9d4;background:#ffffff09;border-radius:4px;padding:2px 6px;white-space:nowrap}
+.dict-list .ok{color:#94ecc4}
+.dict-list .err{color:#ffb5a9}
+.hint{font-size:12px;color:#8d99ad;margin:10px 0 0}
+.progress-box{margin-top:12px}
+.progress-box p{font-size:12px;margin:6px 0 0;color:#98dbba}
+.guide{padding-left:20px;margin:16px 0 18px;color:#c4ccda;font-size:13px}
+.guide li{margin:12px 0;line-height:1.7}
+code{background:#ffffff10;border-radius:5px;padding:2px 7px;font-size:13px;color:#edf0f6;user-select:all}
+button.link{background:none;border:none;color:#84b7f5;padding:0 4px;text-decoration:underline;font-weight:600}
+#anki-check-result{font-size:12px;margin-left:6px}
+.good{color:#94ecc4}
+.bad{color:#ffb5a9}
+.check.big{font-size:13px;margin-top:22px}
+.wizard-nav{display:flex;align-items:center;gap:10px}
+.wizard-nav #nav-note{margin-right:auto;font-size:11px;color:#8d99ad}
+.wizard-nav #next{padding:10px 22px;font-size:13px}
+@media (max-width:620px){.steps{display:none}.choices,.dict-list{grid-template-columns:1fr}}
+.step p kbd{font-size:14px;padding:0 7px;border-bottom-width:2px}

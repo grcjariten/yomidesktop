@@ -50,6 +50,8 @@ public static class TextProbe {
     static volatile int contextExtent=200;
     static long sequence=0;
     static int shiftPulse=0,escapePulse=0;
+    static volatile int scanKey=0x10; // Shift, Ctrl or Alt, chosen in the setup
+    static int ModifierKey(int key){switch(key){case 0xA0:case 0xA1:return 0x10;case 0xA2:case 0xA3:return 0x11;case 0xA4:case 0xA5:return 0x12;default:return key;}}
     static uint hookThreadId;
     static volatile bool keyboardHookReady=false;
     static KeyboardHook keyboardCallback=OnKeyboard;
@@ -60,7 +62,7 @@ public static class TextProbe {
     static AutoResetEvent ready=new AutoResetEvent(false);
     static void CaptureShortcut(int key,long kind){
         if(kind==0x100||kind==0x104){
-            if(key==0x10||key==0xA0||key==0xA1)Interlocked.Exchange(ref shiftPulse,1);
+            if(ModifierKey(key)==scanKey)Interlocked.Exchange(ref shiftPulse,1);
             else if(key==0x1B)Interlocked.Exchange(ref escapePulse,1);
         }
     }
@@ -212,6 +214,7 @@ public static class TextProbe {
             string line;while((line=Console.ReadLine())!=null) {
                 try{
                     var d=json.Deserialize<Dictionary<string,object>>(line);
+                    if(d.ContainsKey("scanKey")){int k=Convert.ToInt32(d["scanKey"]);if(k==0x10||k==0x11||k==0x12)scanKey=k;}
                     if(d.ContainsKey("enabled"))enabled=Convert.ToBoolean(d["enabled"]);
                     if(d.ContainsKey("extent"))contextExtent=Math.Max(50,Math.Min(2000,Convert.ToInt32(d["extent"])));
                     if(d.ContainsKey("ocr"))ocrEnabled=Convert.ToBoolean(d["ocr"]);
@@ -235,7 +238,7 @@ public static class TextProbe {
         while(!exit) {
             POINT p;GetCursorPos(out p);
             IntPtr fg=GetForegroundWindow();if(fg!=previousForeground){uint fpid;GetWindowThreadProcessId(fg,out fpid);Send(new{kind="foreground",pid=fpid,hwnd=fg.ToInt64()});previousForeground=fg;}
-            bool shift=(GetAsyncKeyState(0x10)&0x8000)!=0,esc=(GetAsyncKeyState(0x1b)&0x8000)!=0;
+            bool shift=(GetAsyncKeyState(scanKey)&0x8000)!=0,esc=(GetAsyncKeyState(0x1b)&0x8000)!=0;
             bool shiftTap=Interlocked.Exchange(ref shiftPulse,0)!=0,escapeTap=Interlocked.Exchange(ref escapePulse,0)!=0;
             if(p.X!=px||p.Y!=py){Send(new{kind="pointer-move",x=p.X,y=p.Y});px=p.X;py=p.Y;}
             if(shiftTap||(!keyboardHookReady&&shift&&!previousShift)){gesture++;Send(new{kind="shift-down",gesture=gesture,x=p.X,y=p.Y});}

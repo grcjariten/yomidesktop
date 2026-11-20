@@ -4,14 +4,21 @@ const {app,BrowserWindow,session,ipcMain,screen,Tray,Menu,nativeImage,dialog,she
 const fs=require('node:fs');const fsp=fs.promises;const path=require('node:path');const crypto=require('node:crypto');const {spawn}=require('node:child_process');const readline=require('node:readline');
 const {placePopup,validateSource,contained,localAnkiUrl,safeInside}=require('./core.cjs');
 const anki=require('./anki.cjs');
+const {suggestedDictionaries,installedIds,ankiLinks}=require('./setup.cjs');
 const {PopupSession}=require('./popup-session.cjs');
 const root=process.env.YOMIDESKTOP_ROOT||(app.isPackaged?path.dirname(process.execPath):path.resolve(__dirname,'..'));
 const data=process.env.YOMIDESKTOP_DATA||path.join(root,'data');fs.mkdirSync(data,{recursive:true});
 app.setName('YomiDesktop');app.setPath('userData',path.join(data,'profile'));
 const testMode=process.argv.includes('--self-test');
-let preferences={enabled:true,ocrEnabled:true,ankiServer:'http://127.0.0.1:8765',ankiKey:'',ankiDeck:'Yomitan',startAtLogin:false};
+let preferences={scanKey:'shift',enabled:true,ocrEnabled:true,ankiServer:'http://127.0.0.1:8765',ankiKey:'',ankiDeck:'Yomitan',startAtLogin:false};
 const preferencesFile=path.join(data,'preferences.json');
+const hadPreferences=fs.existsSync(preferencesFile);
 try{preferences={...preferences,...JSON.parse(fs.readFileSync(preferencesFile,'utf8'))};}catch{}
+// Existing installs skip the setup wizard; a fresh install opens it.
+if(preferences.setupDone===undefined)preferences.setupDone=hadPreferences&&Boolean(preferences.ankiPrepared||fs.existsSync(path.join(data,'dictionary-import.json')));
+const scanKeys={shift:{code:0x10,label:'Shift',yomitan:'shift'},ctrl:{code:0x11,label:'Ctrl',yomitan:'ctrl'},alt:{code:0x12,label:'Alt',yomitan:'alt'}};
+const scanKey=()=>scanKeys[preferences.scanKey]||scanKeys.shift;
+const readyPhase=()=>`Pronto · tieni premuto ${scanKey().label} sul testo`;
 const savePrefs=()=>{const tmp=preferencesFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(preferences,null,2));fs.renameSync(tmp,preferencesFile);};
 let mainWindow,engine,popup,tray,native,extensionId,shuttingDown=false,engineReady=false,popupReady=false;
 let status={phase:'Avvio…',enabled:preferences.enabled,dictionaries:[],native:false,vlc:'Preparazione…',anki:preferences.ankiPrepared?'Carte pronte · AnkiConnect locale':'Da collegare',imported:0,total:0};
@@ -32,13 +39,13 @@ function safeWeb(w){
 function windowOptions(extra={}){return {show:false,icon:path.join(__dirname,'extension','images','icon128.png'),backgroundColor:'#1d2027',webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,spellcheck:false,backgroundThrottling:false},...extra};}
 function createMain(){
   mainWindow=new BrowserWindow(windowOptions({width:680,height:730,minWidth:540,minHeight:600,title:'YomiDesktop',autoHideMenuBar:true}));safeWeb(mainWindow);
-  mainWindow.loadFile(path.join(__dirname,'ui','index.html'));
+  mainWindow.loadFile(path.join(__dirname,'ui',preferences.setupDone?'index.html':'setup.html'));
   mainWindow.on('close',e=>{if(!shuttingDown&&!testMode){e.preventDefault();mainWindow.hide();}});
   mainWindow.webContents.on('did-finish-load',()=>mainWindow.webContents.send('desktop:status',status));
-  if(!process.argv.includes('--background')&&!testMode)mainWindow.show();
+  if((!process.argv.includes('--background')||!preferences.setupDone)&&!testMode)mainWindow.show();
 }
 function refreshTray(){
-  tray.setToolTip(`YomiDesktop · ${preferences.enabled?'Shift per cercare':'In pausa'}`);
+  tray.setToolTip(`YomiDesktop · ${preferences.enabled?scanKey().label+' per cercare':'In pausa'}`);
   tray.setContextMenu(Menu.buildFromTemplate([{label:'Apri YomiDesktop',click:()=>mainWindow.show()},{label:'Attivo',type:'checkbox',checked:preferences.enabled,click:()=>toggleEnabled(!preferences.enabled)},{type:'separator'},{label:'Esci',click:()=>app.quit()}]));
 }
 function toggleEnabled(value){preferences.enabled=Boolean(value);savePrefs();if(native?.stdin.writable)native.stdin.write(JSON.stringify({enabled:preferences.enabled})+'\n');setStatus({enabled:preferences.enabled});if(!value)hidePopup();}
@@ -87,12 +94,12 @@ async function startEngine(){
   await importData();
   if(preferences.cardsVersion!==2){
     // One-time switch to the Firefox Yomitan card settings (plus frequency/source in Notes).
-    await bridge('setOptions',anki.applyMapping(await bridge('options'),preferences.ankiServer,preferences.ankiKey,preferences.ankiDeck));
+    await bridge('setOptions',anki.applyMapping(await bridge('options'),preferences.ankiServer,preferences.ankiKey,preferences.ankiDeck,{model:preferences.ankiModel,autoMeaning:preferences.ankiAutoMeaning}));
     preferences.cardsVersion=2;savePrefs();
   }
   const options=await bridge('options');const current=options.profiles[options.profileCurrent].options;
   popupSize={width:Math.max(300,Math.round(current.general.popupWidth*current.general.popupScalingFactor)),height:Math.max(200,Math.round(current.general.popupHeight*current.general.popupScalingFactor))};scanLength=current.scanning.length;contextExtent=current.sentenceParsing.scanExtent;
-  setStatus({dictionariesLoaded:true,dictionaries:await bridge('dictionaries'),phase:'Pronto · tieni premuto Shift sul testo'});
+  setStatus({dictionariesLoaded:true,dictionaries:await bridge('dictionaries'),phase:readyPhase()});
   popup=new BrowserWindow(windowOptions({width:popupSize.width,height:popupSize.height,frame:false,alwaysOnTop:true,skipTaskbar:true,resizable:true,minWidth:280,minHeight:180,hasShadow:true,focusable:false}));safeWeb(popup);
   popup.setAlwaysOnTop(true,'screen-saver');
   popup.webContents.on('console-message',(_event,d)=>{if(d.level==='error'||d.level===3)log('popup-error',d.message);});
@@ -101,7 +108,7 @@ async function startEngine(){
   popup.on('close',e=>{if(!shuttingDown){e.preventDefault();hidePopup();}});
   engineReady=true;sendOwnPids();
 }
-function sendOwnPids(){if(!native?.stdin?.writable)return;const pids=[process.pid,...BrowserWindow.getAllWindows().map(w=>w.webContents.getOSProcessId())];native.stdin.write(JSON.stringify({pids,enabled:preferences.enabled,extent:contextExtent,ocr:preferences.ocrEnabled})+'\n');}
+function sendOwnPids(){if(!native?.stdin?.writable)return;const pids=[process.pid,...BrowserWindow.getAllWindows().map(w=>w.webContents.getOSProcessId())];native.stdin.write(JSON.stringify({pids,enabled:preferences.enabled,extent:contextExtent,ocr:preferences.ocrEnabled,scanKey:scanKey().code})+'\n');}
 function requestOcr(event){if(!preferences.ocrEnabled||!native?.stdin?.writable||!popupSession.accepts(event))return;native.stdin.write(JSON.stringify({ocrPoint:{x:event.x,y:event.y,sequence:event.sequence,gesture:event.gesture,window:event.hwnd}})+'\n');}
 function hidePopup(){popupSession.reset();requestId++;lastQueryKey='';if(popup&&!popup.isDestroyed())popup.hide();vlcBridge?.release();}
 async function lookup(raw){
@@ -124,9 +131,9 @@ async function lookup(raw){
     const area=screen.getDisplayNearestPoint(p).workArea;
     popup.setBounds(placePopup(a,popupSize,area));popup.showInactive();popup.moveTop();
     popupSession.shown(anchor);
-    lastUnsupported='';setStatus({phase:'Pronto · tieni premuto Shift sul testo',lastLookupMs:Date.now()-started});
+    lastUnsupported='';setStatus({phase:readyPhase(),lastLookupMs:Date.now()-started});
     vlcBridge?.hold(source);
-  }catch(e){if(id!==requestId)return;hidePopup();log('lookup-error',errorMessage(e));setStatus({phase:'Ricerca non riuscita. Riprova con Shift.'});}
+  }catch(e){if(id!==requestId)return;hidePopup();log('lookup-error',errorMessage(e));setStatus({phase:'Ricerca non riuscita. Riprova con '+scanKey().label+'.'});}
 }
 function startNative(){
   if(shuttingDown)return;
@@ -180,7 +187,7 @@ async function handleCommand(event,name,payload={}){
       popupSize={width:Math.max(300,Math.round(p.general.popupWidth*p.general.popupScalingFactor)),height:Math.max(200,Math.round(p.general.popupHeight*p.general.popupScalingFactor))};
       sendOwnPids();setStatus({dictionaries:await bridge('dictionaries')});return true;
     }
-    case 'status':return {...status,preferences:{...preferences,ankiKey:undefined},version:app.getVersion()};
+    case 'status':return {...status,scanKeyLabel:scanKey().label,preferences:{...preferences,ankiKey:undefined},version:app.getVersion()};
     case 'toggle':toggleEnabled(payload.enabled);return status;
     case 'ocr-toggle':preferences.ocrEnabled=Boolean(payload.enabled);savePrefs();sendOwnPids();setStatus({ocr:preferences.ocrEnabled?(status.ocrAvailable?'OCR locale · giapponese':'OCR giapponese non disponibile'):'OCR disattivato'});return true;
     case 'settings':openEnginePage(`chrome-extension://${extensionId}/settings.html`);return true;
@@ -191,11 +198,40 @@ async function handleCommand(event,name,payload={}){
     }
     case 'anki-prepare':{
       const server=localAnkiUrl(payload.server||preferences.ankiServer),key=String(payload.key||preferences.ankiKey||''),deck=String(payload.deck||preferences.ankiDeck).trim();if(!deck||deck.length>200)throw new Error('Nome mazzo non valido');
-      const result=await anki.prepare(server,key,deck);
-      preferences.ankiServer=server;preferences.ankiKey=key;preferences.ankiDeck=deck;preferences.ankiPrepared=true;savePrefs();
-      await bridge('setOptions',anki.applyMapping(await bridge('options'),server,key,deck));setStatus({anki:'Collegato · carte pronte'});return result;
+      const setup=Boolean(payload.setup),autoMeaning=setup?Boolean(payload.autoMeaning):Boolean(preferences.ankiAutoMeaning);
+      const result=await anki.prepare(server,key,deck,fetch,{createModel:setup});
+      preferences.ankiServer=server;preferences.ankiKey=key;preferences.ankiDeck=deck;preferences.ankiPrepared=true;preferences.ankiModel=result.model;preferences.ankiAutoMeaning=autoMeaning;preferences.cardsVersion=2;savePrefs();
+      await bridge('setOptions',anki.applyMapping(await bridge('options'),server,key,deck,{model:result.model,autoMeaning}));setStatus({anki:'Collegato · carte pronte'});return result;
     }
     case 'open-video':return vlcBridge?.openVideo();
+    // Setup wizard
+    case 'setup-info':{
+      const installed=engineReady?installedIds(await bridge('dictionaries')):[];
+      return {scanKey:preferences.scanKey,dictionaries:suggestedDictionaries.map(({url,match,...d})=>({...d,installed:installed.includes(d.id)})),engineReady,ankiServer:preferences.ankiServer,ankiDeck:preferences.ankiDeck,ankiAutoMeaning:Boolean(preferences.ankiAutoMeaning),ankiPrepared:Boolean(preferences.ankiPrepared),startAtLogin:Boolean(preferences.startAtLogin)};
+    }
+    case 'set-key':{
+      const next=String(payload.key);if(!scanKeys[next])throw new Error('Tasto non valido');
+      const previous=scanKey().yomitan;preferences.scanKey=next;savePrefs();sendOwnPids();
+      if(engineReady&&previous!==scanKeys[next].yomitan){const options=await bridge('options');for(const profile of options.profiles)for(const input of profile.options.scanning.inputs)if(input.include===previous)input.include=scanKeys[next].yomitan;await bridge('setOptions',options);}
+      setStatus({phase:engineReady?readyPhase():status.phase,scanKeyLabel:scanKey().label});return true;
+    }
+    case 'install-dictionaries':{
+      if(!engineReady)throw new Error('Il motore si sta ancora avviando. Riprova tra qualche secondo.');
+      const wanted=suggestedDictionaries.filter(d=>(payload.ids||[]).includes(d.id));const results=[];
+      for(const [index,d] of wanted.entries()){
+        setStatus({setupProgress:{index,total:wanted.length,title:d.title}});
+        try{if(!installedIds(await bridge('dictionaries')).includes(d.id))await bridge('importUrl',d.url);results.push({id:d.id,ok:true});log('setup-dictionary',d.title);}
+        catch(e){results.push({id:d.id,ok:false,message:errorMessage(e)});log('setup-dictionary-error',d.title+' '+errorMessage(e));}
+      }
+      setStatus({setupProgress:null,dictionaries:await bridge('dictionaries'),dictionariesLoaded:true});return results;
+    }
+    case 'open-link':{const url=ankiLinks[payload.id];if(!url)return false;shell.openExternal(url);return true;}
+    case 'finish-setup':{
+      preferences.setupDone=true;
+      if(payload.startAtLogin!==undefined){preferences.startAtLogin=Boolean(payload.startAtLogin);app.setLoginItemSettings({openAtLogin:preferences.startAtLogin,path:process.execPath,args:['--background']});}
+      savePrefs();mainWindow.loadFile(path.join(__dirname,'ui','index.html'));return true;
+    }
+    case 'open-setup':mainWindow.loadFile(path.join(__dirname,'ui','setup.html'));return true;
     case 'start-at-login':preferences.startAtLogin=Boolean(payload.enabled);app.setLoginItemSettings({openAtLogin:preferences.startAtLogin,path:process.execPath,args:['--background']});savePrefs();return true;
     case 'quit':app.quit();return true;
     default:throw new Error('Comando non supportato');
@@ -213,7 +249,7 @@ else{
     Menu.setApplicationMenu(null);createMain();if(!testMode)createTray();
     try{
       await startEngine();
-      if(testMode){await require('./tests/integration.cjs').run({app,engine,popup,popupSession,bridge,lookup,data,root,status,mainWindow});const stale=path.join(data,'self-test-error.txt');if(fs.existsSync(stale))fs.unlinkSync(stale);app.quit();return;}
+      if(testMode){await require(process.env.YOMIDESKTOP_SETUP_TEST?'./tests/setup-smoke.cjs':'./tests/integration.cjs').run({app,engine,popup,popupSession,bridge,lookup,data,root,status,mainWindow});const stale=path.join(data,'self-test-error.txt');if(fs.existsSync(stale))fs.unlinkSync(stale);app.quit();return;}
       const {VlcBridge}=require('./vlc.cjs');vlcBridge=new VlcBridge({root,data,source:__dirname,createWindow:(opts)=>{const w=new BrowserWindow(windowOptions(opts));safeWeb(w);return w;},attachOwner:(w,target)=>new Promise(resolve=>{if(!native?.stdin?.writable){resolve(false);return;}const hwnd=Number(w.getNativeWindowHandle().readBigUInt64LE(0)),key=String(hwnd);ownerRequests.set(key,resolve);sendOwnPids();native.stdin.write(JSON.stringify({ownerWindow:hwnd,owner:target.hwnd})+'\n');setTimeout(()=>{if(ownerRequests.delete(key))resolve(false);},1500);}),setStatus,lookup,hidePopup,screen,dialog});await vlcBridge.start();
       startNative();log('application-ready');watchdog=setInterval(()=>{if(nativeBusySince&&Date.now()-nativeBusySince>7000){log('provider-timeout');nativeBusySince=0;native?.kill();}},1000);
     }catch(e){log('startup-error',e.stack||errorMessage(e));setStatus({phase:errorMessage(e),error:true});if(testMode){fs.writeFileSync(path.join(data,'self-test-error.txt'),e.stack||String(e));app.exit(1);}else mainWindow.show();}

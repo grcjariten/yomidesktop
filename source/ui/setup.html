@@ -1,0 +1,58 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:"><title>YomiDesktop · Configurazione</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="setup.css"><script defer src="setup.js"></script></head><body>
+<header><img src="../extension/images/icon64.png" width="44" height="44" alt=""><div><h1>YomiDesktop</h1><p>Configurazione guidata</p></div><ol class="steps" aria-label="Passi"><li>Tasto</li><li>Dizionari</li><li>Anki</li><li>Fine</li></ol></header>
+<main>
+
+<section class="step" data-step="0">
+  <p class="eyebrow">BENVENUTO</p>
+  <h2>Pronto in 4 passi.</h2>
+  <p>Punti una parola giapponese in qualsiasi programma, premi un tasto e appare la traduzione. Funziona su video, giochi, visual novel, chat e immagini.</p>
+  <p>Se non vuoi cambiare niente, premi solo <b>Avanti</b>: le scelte consigliate sono già pronte.</p>
+</section>
+
+<section class="step" data-step="1" hidden>
+  <p class="eyebrow">PASSO 1 · TASTO</p>
+  <h2>Con quale tasto vuoi cercare?</h2>
+  <p>Punti la parola, premi il tasto e appare il popup.</p>
+  <div class="choices" role="radiogroup" aria-label="Tasto di ricerca">
+    <label class="choice"><input type="radio" name="key" value="shift"><kbd>Shift</kbd><span>Consigliato</span></label>
+    <label class="choice"><input type="radio" name="key" value="ctrl"><kbd>Ctrl</kbd><span>&nbsp;</span></label>
+    <label class="choice"><input type="radio" name="key" value="alt"><kbd>Alt</kbd><span>Apre i menu in alcuni programmi</span></label>
+  </div>
+</section>
+
+<section class="step" data-step="2" hidden>
+  <p class="eyebrow">PASSO 2 · DIZIONARI</p>
+  <h2>Quali dizionari vuoi?</h2>
+  <p>Quelli selezionati sono i consigliati. Vengono scaricati dai siti ufficiali.</p>
+  <ul id="dict-list" class="dict-list"></ul>
+  <p id="dict-total" class="hint"></p>
+  <div id="dict-progress" class="progress-box" hidden><progress id="dict-bar"></progress><p id="dict-status" role="status"></p></div>
+</section>
+
+<section class="step" data-step="3" hidden>
+  <p class="eyebrow">PASSO 3 · ANKI</p>
+  <h2>Vuoi creare carte Anki?</h2>
+  <p>Con un clic nel popup la parola diventa una carta, con lettura, frase e audio.</p>
+  <ol class="guide">
+    <li><b>Installa e apri Anki.</b> <button class="link" data-link="anki">Scarica Anki</button></li>
+    <li><b>Aggiungi AnkiConnect.</b> In Anki apri Strumenti → Componenti aggiuntivi → Ottieni componenti aggiuntivi (in inglese: Tools → Add-ons → Get Add-ons) e incolla questo codice: <code>2055492159</code> <button class="link" id="copy-code">Copia</button><br>Poi chiudi e riapri Anki.</li>
+    <li><b>Controlla il collegamento.</b> <button id="anki-check" class="secondary">Verifica</button> <span id="anki-check-result" role="status"></span></li>
+  </ol>
+  <div class="form">
+    <label>Nome del mazzo<input id="anki-deck" value="Yomitan" autocomplete="off"></label>
+    <label class="check"><input type="checkbox" id="anki-meaning"> Scrivi già il significato sulla carta (altrimenti lo scrivi tu)</label>
+  </div>
+  <p id="anki-result" class="hint" role="status"></p>
+</section>
+
+<section class="step" data-step="4" hidden>
+  <p class="eyebrow">FATTO</p>
+  <h2>Tutto pronto.</h2>
+  <p>Apri un video, un gioco o una chat in giapponese. Punta una parola e premi <kbd id="final-key">Shift</kbd>.</p>
+  <p>Premi di nuovo il tasto, <kbd>Esc</kbd> o fai clic fuori per chiudere il popup.</p>
+  <label class="check big"><input type="checkbox" id="autostart" checked> Avvia YomiDesktop con Windows</label>
+  <p class="hint">Puoi rifare questa configurazione quando vuoi dal pannello.</p>
+</section>
+
+<nav class="wizard-nav"><button id="back" class="secondary">Indietro</button><span id="nav-note"></span><button id="skip" class="secondary" hidden>Salta</button><button id="next">Avanti</button></nav>
+</main></body></html>
