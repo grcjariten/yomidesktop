@@ -52,7 +52,7 @@ async function importData(){
   const migration=process.env.YOMIDESKTOP_MIGRATION||path.resolve(root,'..','..','work','migration');
   const manifestFile=path.join(migration,'manifest.json');const completedFile=path.join(data,'dictionary-import.json');
   if(fs.existsSync(completedFile))return;
-  if(!fs.existsSync(manifestFile))throw new Error('Archivio dei dizionari non ancora pronto.');
+  if(!fs.existsSync(manifestFile)){log('dictionary-import-skipped','fresh profile');return;}// Fresh install: dictionaries are imported from Yomitan settings.
   const manifest=JSON.parse(fs.readFileSync(manifestFile,'utf8'));if(!manifest.complete)throw new Error('Archivio incompleto.');
   const total=Object.values(manifest.tables).reduce((a,b)=>a+b,0);
   setStatus({phase:'Installazione dei tuoi dizionari…',total,imported:0});
@@ -92,7 +92,7 @@ async function startEngine(){
   }
   const options=await bridge('options');const current=options.profiles[options.profileCurrent].options;
   popupSize={width:Math.max(300,Math.round(current.general.popupWidth*current.general.popupScalingFactor)),height:Math.max(200,Math.round(current.general.popupHeight*current.general.popupScalingFactor))};scanLength=current.scanning.length;contextExtent=current.sentenceParsing.scanExtent;
-  setStatus({dictionaries:await bridge('dictionaries'),phase:'Pronto · tieni premuto Shift sul testo'});
+  setStatus({dictionariesLoaded:true,dictionaries:await bridge('dictionaries'),phase:'Pronto · tieni premuto Shift sul testo'});
   popup=new BrowserWindow(windowOptions({width:popupSize.width,height:popupSize.height,frame:false,alwaysOnTop:true,skipTaskbar:true,resizable:true,minWidth:280,minHeight:180,hasShadow:true,focusable:false}));safeWeb(popup);
   popup.setAlwaysOnTop(true,'screen-saver');
   popup.webContents.on('console-message',(_event,d)=>{if(d.level==='error'||d.level===3)log('popup-error',d.message);});
