@@ -28,6 +28,9 @@ static class Setup
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         int u = Array.FindIndex(args, a => a.Equals("/uninstall", StringComparison.OrdinalIgnoreCase));
         if (u >= 0) return Uninstall(u + 1 < args.Length ? args[u + 1] : AppDomain.CurrentDomain.BaseDirectory);
+        // The copy inside the program folder is "Uninstall.exe": a double click uninstalls.
+        if (Path.GetFileNameWithoutExtension(Application.ExecutablePath).Equals("Uninstall", StringComparison.OrdinalIgnoreCase))
+            return Uninstall(AppDomain.CurrentDomain.BaseDirectory);
         // Test only: extract a ZIP into a folder, no shortcuts or registry.
         if (args.Length == 3 && args[0] == "/extract-test")
         {
@@ -71,6 +74,7 @@ static class Setup
     }
 
     public static string StartMenuLink() { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), AppName + ".lnk"); }
+    public static string UninstallLink() { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "Disinstalla " + AppName + ".lnk"); }
     public static string DesktopLink() { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), AppName + ".lnk"); }
 
     static int Uninstall(string folder)
@@ -99,7 +103,7 @@ static class Setup
             try { if (Directory.Exists(entry)) Directory.Delete(entry, true); else File.Delete(entry); } catch { }
         }
         if (removeData) { try { Directory.Delete(folder, true); } catch { } }
-        foreach (string link in new[] { StartMenuLink(), DesktopLink() }) { try { File.Delete(link); } catch { } }
+        foreach (string link in new[] { StartMenuLink(), UninstallLink(), DesktopLink() }) { try { File.Delete(link); } catch { } }
         using (var run = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
             if (run != null) foreach (string name in run.GetValueNames())
                     if ((run.GetValue(name) as string ?? "").IndexOf(folder, StringComparison.OrdinalIgnoreCase) >= 0) run.DeleteValue(name, false);
@@ -227,6 +231,7 @@ class InstallForm : Form
             File.Copy(Application.ExecutablePath, Path.Combine(folder, "Uninstall.exe"), true);
             string exe = Path.Combine(folder, "YomiDesktop.exe");
             Setup.Shortcut(Setup.StartMenuLink(), exe, folder);
+            Setup.Shortcut(Setup.UninstallLink(), Path.Combine(folder, "Uninstall.exe"), folder);
             if (desktop) Setup.Shortcut(Setup.DesktopLink(), exe, folder);
             Setup.Register(folder, version);
             if (downloaded) { try { File.Delete(zip); } catch { } }

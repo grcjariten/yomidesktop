@@ -66,7 +66,7 @@ A small **OCR** label in the popup tells you when the text came from recognition
    - **Anki** — three short steps to connect it (install Anki, add AnkiConnect, check). Or skip.
 5. Point at Japanese text anywhere and press your key.
 
-Uninstall from **Windows Settings → Apps**. Updating is just running the setup again: your dictionaries and settings are kept.
+Uninstall from **Windows Settings → Apps**, from **Start → Disinstalla YomiDesktop**, or with `Uninstall.exe` in the program folder. Updating is just running the setup again: your dictionaries and settings are kept.
 
 <details><summary>Recommended dictionaries</summary>
 
