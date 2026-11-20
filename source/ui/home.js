@@ -1,0 +1,11 @@
+'use strict';
+const $=id=>document.getElementById(id);const host=window.desktopHost;
+function update(s){$('status').textContent=s.phase;$('status').classList.toggle('error',Boolean(s.error));$('toggle').setAttribute('aria-pressed',String(s.enabled));$('toggle').textContent=s.enabled?'Attivo':'In pausa';$('dictionary-count').textContent=s.dictionaries.length||'—';$('dict-description').textContent=s.dictionaries.length?`${s.dictionaries.length} dizionari · ordine e frequenze importati`:'Caricamento dei tuoi dizionari…';$('dictionaries').replaceChildren(...s.dictionaries.map(d=>{const li=document.createElement('li');li.textContent=d.title;return li;}));$('vlc-state').textContent=s.vlc;$('anki-state').textContent=s.anki;$('progress').hidden=!s.total||s.imported>=s.total;$('progress').max=s.total||1;$('progress').value=s.imported;}
+host.onStatus(update);host.command('status').then(s=>{update(s);$('anki-server').value=s.preferences.ankiServer;$('anki-deck').value=s.preferences.ankiDeck;$('autostart').checked=s.preferences.startAtLogin;});
+$('toggle').onclick=()=>host.command('toggle',{enabled:$('toggle').getAttribute('aria-pressed')!=='true'});
+$('settings').onclick=()=>host.command('settings');$('video').onclick=()=>host.command('open-video').catch(e=>{$('vlc-state').textContent=e.message;});
+$('autostart').onchange=()=>host.command('start-at-login',{enabled:$('autostart').checked});
+$('ocr-toggle').onchange=()=>host.command('ocr-toggle',{enabled:$('ocr-toggle').checked});
+host.onStatus(s=>{$('ocr-state').textContent=s.ocr||'Preparazione OCR…';});
+host.command('status').then(s=>{$('ocr-toggle').checked=s.preferences.ocrEnabled!==false;$('ocr-state').textContent=s.ocr||'Preparazione OCR…';});
+for(const [id,action] of [['anki-test','anki-test'],['anki-prepare','anki-prepare']])$(id).onclick=async()=>{const b=$(id);b.disabled=true;$('anki-result').textContent='Collegamento…';try{const r=await host.command(action,{server:$('anki-server').value,key:$('anki-key').value,deck:$('anki-deck').value});$('anki-result').textContent=r.ok===false?r.message:action==='anki-test'?'AnkiConnect risponde.':'Mazzo e modello pronti. Usa il pulsante + nel popup per aggiungere le parole.';}catch(e){$('anki-result').textContent=e.message;}finally{b.disabled=false;}};

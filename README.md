@@ -1,33 +1,76 @@
-<p align="center"><img src="app/ui/icon.svg" alt="" width="96"></p>
 <h1 align="center">YomiDesktop</h1>
-<p align="center"><strong>Point at Japanese text. Press Shift. Keep reading.</strong></p>
 
-YomiDesktop brings the [Yomitan](https://github.com/yomidevs/yomitan) dictionary engine to Windows desktop apps. It reads accessible text at the pointer and can use local Japanese OCR when an app only exposes pixels.
+<p align="center"><strong>Point at Japanese. Press Shift. Understand it.</strong><br>
+Anywhere on your Windows screen — videos, games, visual novels, chats, images, even your wallpaper.</p>
 
-## Quick start
+<p align="center">
+  <img alt="Windows 10/11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
+  <img alt="Works offline" src="https://img.shields.io/badge/works-100%25%20offline-2ea44f">
+  <img alt="Powered by Yomitan" src="https://img.shields.io/badge/powered%20by-Yomitan-8a2be2">
+  <img alt="License GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue">
+</p>
 
-1. Download the Windows x64 ZIP from [Releases](../../releases) and extract the entire archive.
-2. Open **YomiDesktop.exe**. This beta is unsigned, so Windows may show a publisher warning.
-3. Use the first-run setup to browse Yomitan’s recommended dictionaries or import your own Yomitan-format ZIP files.
-4. Point at Japanese text and press **Shift**. Press the lookup key again or **Esc** to close the popup. Change the key under **Yomitan engine settings → Scanning**.
+<!-- Screenshots coming soon -->
 
-The dictionary list starts empty. You can import term, frequency, and pitch-accent dictionaries and set their order in the engine settings.
+---
 
-## What works
+Yomitan is the best pop-up dictionary for learning Japanese — but it only lives in the browser.
+**YomiDesktop takes it out of the browser and puts it on your whole desktop.**
 
-| Feature | Details |
+Hover any Japanese word, in any program, press **Shift**, and the real Yomitan popup appears right there: readings, meanings, frequency, pitch accent, audio, and one-click Anki cards. No copy-paste, no switching windows, no texthooker, no per-app setup.
+
+## One tool, every app
+
+| Where you read Japanese | How YomiDesktop reads it |
 | --- | --- |
-| Desktop lookup | Reads text exposed by Windows accessibility APIs and shows entries from your dictionaries. |
-| Local Japanese OCR | Reads the visible region around the pointer, including rasterized text and visible subtitles. Accuracy depends on font size, contrast, and rendering. |
-| Anki | Optional [AnkiConnect](https://ankiweb.net/shared/info/2055492159) integration. Use the starter note type or your own. You can fill definitions automatically or enter them yourself. |
-| Video | Open files in an existing VLC installation. A compatible 32-bit VLC installation can use the optional bridge for text subtitles. Image-based subtitles rely on OCR. |
+| 🎬 **VLC** — anime, dramas, films | Reads the original subtitle text straight from VLC. Burned-in subtitles? It reads those too. |
+| 🎮 **Games** (windowed / borderless fullscreen) | The popup floats over the game without stealing focus — your game won't minimize. |
+| 📖 **Visual novels** | Works on the text box directly, no hooking needed. |
+| 💬 **Telegram, WhatsApp, LINE** | Look up words in your messages without leaving the chat. |
+| 🖼️ **Images, manga, screenshots, your wallpaper** | Local OCR reads text drawn as pixels, including manga lettering and handwriting. |
+| 🌐 **Browsers, PDFs, Office, any app** | Uses the text Windows already exposes, character by character. |
 
-YomiDesktop is an unofficial Windows x64 beta. Compatibility depends on the text each app exposes and on what Windows permits YomiDesktop to capture. Lookup can fail in games, protected video, or with very small text. The profile lives in `%APPDATA%\YomiDesktop Public`.
+If an app shows Japanese on screen, YomiDesktop can almost certainly read it.
 
-## Build and test
+## How it works
 
-See [Build from source](app/BUILD.md) for dependencies, packaging, and tests.
+1. **Real text first.** YomiDesktop asks Windows for the exact character under your cursor, using three different accessibility readers. When that works, the lookup is perfect and instant.
+2. **OCR when there is no text.** If the app only shows pixels (games, video, images), a local Japanese OCR reads a small area around the cursor. It combines a reader for app text with two readers trained on manga and handwriting, and uses your graphics card when available — answers arrive in about a tenth of a second.
+3. **The original Yomitan popup.** Same engine, same dictionaries, same look and settings you know from the browser extension.
+
+A small **OCR** label in the popup tells you when the text came from recognition.
+
+## Features
+
+- **One gesture everywhere:** cursor + **Shift**. Press Shift again, press **Esc**, click elsewhere or move away to close. You can move into the popup to use its buttons.
+- **Your Yomitan dictionaries:** import any Yomitan-format dictionary (JMdict/Jitendex, frequency lists, pitch accent…) and keep their order and settings.
+- **Anki in one click:** works with AnkiConnect, with the same card setup as Yomitan, plus the word's frequency and its source (video title or window name) in the notes.
+- **VLC integration:** open videos normally or from YomiDesktop and look up words directly in the subtitles.
+- **Private and offline:** everything runs on your PC. Screen areas are processed in memory and never saved or sent anywhere. No account, no cloud, no clipboard tricks.
+- **Lives in the tray:** starts with Windows if you want, and stays out of your way until you press Shift.
+
+## Download
+
+1. Grab the latest Windows ZIP from **[Releases](../../releases)** and extract the **whole** folder.
+2. Open **YomiDesktop.exe**. The build is not signed yet, so Windows may show a warning the first time.
+3. Import your dictionaries from **Yomitan settings**.
+4. Point at Japanese text and press **Shift**.
+
+> The interface is currently in Italian. The popup and dictionaries work in whatever language your dictionaries use.
+
+## Honest limits
+
+- OCR can still miss very small, blurry or heavily stylized characters.
+- Windows that block screen capture (some DRM video players, protected apps) can't be read.
+- Exclusive fullscreen games may hide the popup: use borderless or windowed fullscreen.
+- The VLC module targets VLC 3.0.x 32-bit.
+
+## Build from source
+
+The code is in [`source/`](source). See [`source/BUILD.md`](source/BUILD.md) for building the native readers, the VLC module, the OCR runtime and for running the tests. Italian user notes are in [LEGGIMI.md](LEGGIMI.md), test results in [VERIFICA.md](VERIFICA.md).
 
 ## Credits and license
 
-YomiDesktop uses the dictionary engine, popup, and settings from [Yomitan](https://github.com/yomidevs/yomitan), which grew out of [Yomichan](https://github.com/FooSoft/yomichan). Thanks to their authors and contributors. YomiDesktop is distributed under [GPL-3.0-or-later](LICENSE). See the [third-party notices](THIRD-PARTY-NOTICES.md).
+YomiDesktop is built on [Yomitan](https://github.com/yomidevs/yomitan), the successor of [Yomichan](https://github.com/FooSoft/yomichan) — huge thanks to their authors and contributors. It also uses [Electron](https://github.com/electron/electron), [VLC](https://github.com/videolan/vlc), RapidOCR, ONNX Runtime and PaddleOCR models. Some OCR model weights are **non-commercial only** (CC BY-NC-SA 4.0). Full details in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+YomiDesktop is an unofficial project, released under [GPL-3.0-or-later](LICENSE).

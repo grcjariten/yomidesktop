@@ -1,0 +1,104 @@
+{
+ "tags": [
+  "Yomitan"
+ ],
+ "screenshot": {
+  "format": "png",
+  "quality": 92
+ },
+ "cardFormats": [
+  {
+   "name": "Expression",
+   "icon": "big-circle",
+   "deck": "Yomitan",
+   "model": "Kaishi 1.5k",
+   "fields": {
+    "Word": {
+     "value": "{expression}",
+     "overwriteMode": "coalesce"
+    },
+    "Word Reading": {
+     "value": "{reading}",
+     "overwriteMode": "coalesce"
+    },
+    "Word Meaning": {
+     "value": "",
+     "overwriteMode": "coalesce"
+    },
+    "Word Furigana": {
+     "value": "{furigana}",
+     "overwriteMode": "coalesce"
+    },
+    "Word Audio": {
+     "value": "{audio}",
+     "overwriteMode": "coalesce"
+    },
+    "Sentence": {
+     "value": "{sentence}",
+     "overwriteMode": "coalesce"
+    },
+    "Sentence Meaning": {
+     "value": "",
+     "overwriteMode": "coalesce"
+    },
+    "Sentence Furigana": {
+     "value": "{sentence-furigana}",
+     "overwriteMode": "coalesce"
+    },
+    "Sentence Audio": {
+     "value": "",
+     "overwriteMode": "coalesce"
+    },
+    "Notes": {
+     "value": "",
+     "overwriteMode": "coalesce"
+    },
+    "Pitch Accent": {
+     "value": "{pitch-accents}",
+     "overwriteMode": "coalesce"
+    },
+    "Pitch Accent Notes": {
+     "value": "",
+     "overwriteMode": "coalesce"
+    },
+    "Frequency": {
+     "value": "{frequency-harmonic-rank}",
+     "overwriteMode": "coalesce"
+    },
+    "Picture": {
+     "value": "",
+     "overwriteMode": "coalesce"
+    }
+   },
+   "type": "term"
+  },
+  {
+   "name": "Reading",
+   "icon": "small-circle",
+   "deck": "",
+   "model": "",
+   "fields": {},
+   "type": "term"
+  },
+  {
+   "name": "Kanji",
+   "icon": "big-circle",
+   "deck": "",
+   "model": "",
+   "fields": {},
+   "type": "kanji"
+  }
+ ],
+ "duplicateScope": "collection",
+ "duplicateScopeCheckAllModels": true,
+ "checkForDuplicates": true,
+ "duplicateBehavior": "overwrite",
+ "fieldTemplates": null,
+ "suspendNewCards": false,
+ "displayTagsAndFlags": "never",
+ "targetTags": [],
+ "noteGuiMode": "browse",
+ "downloadTimeout": 0,
+ "forceSync": false,
+ "noteDupeCheckFirst": false
+}

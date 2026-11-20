@@ -1,6 +1,25 @@
-dist/
+# Programma già pronto (si scarica dalle Release, non sta nel codice)
+/*.exe
+/*.dll
+/*.pak
+/*.bin
+/*.dat
+/LICENSES.chromium.html
+/runtime-integrity.json
+/version
+/vk_swiftshader_icd.json
+/locales/
+/resources/
+/ocr-runtime/
+
+# Dati personali (dizionari, profilo, carte Anki) e vecchie versioni
+/data/
+/anki/
+/archivio/
+/verifica/
+
+# File generati
 node_modules/
-data/
 *.exe
 *.dll
 *.pdb
@@ -9,5 +28,3 @@ data/
 __pycache__/
 *.pyc
 *.tmp
-!app/extension/data/
-!app/extension/data/**
