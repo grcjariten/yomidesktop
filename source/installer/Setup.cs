@@ -175,8 +175,8 @@ class InstallForm : Form
         installButton.Text = "Installa"; installButton.SetBounds(370, 254, 120, 34); Style(installButton, true);
         installButton.Click += (s, e) => { if (finished) Launch(); else Start(); };
         AcceptButton = installButton;
-        ActiveControl = installButton;
         Controls.AddRange(new Control[] { title, subtitle, where, folderBox, browseButton, desktopBox, bar, status, installButton });
+        ActiveControl = installButton;
     }
 
     static void Style(Button b, bool primary)
