@@ -1,10 +1,14 @@
-# YomiDesktop 1.4
+# YomiDesktop 2.2
 
 Apri **YomiDesktop.exe** o il collegamento sul desktop. Punta una parola giapponese e premi **Shift**. Il popup usa il motore originale di Yomitan e i tuoi otto dizionari.
 
 Una nuova pressione di **Shift** chiude il popup. Si chiude anche quando allontani il cursore, con **Esc** o facendo clic fuori. Puoi attraversare il piccolo spazio fra la parola e il popup per entrare nella definizione e usare i pulsanti. Piccoli movimenti del cursore e una scansione OCR momentaneamente vuota sullo stesso punto non chiudono più la definizione valida.
 
-La X del pannello lascia il programma attivo vicino all’orologio. Per chiuderlo del tutto, usa **Esci** dal menu dell’icona. L’avvio con Windows si gestisce dal pannello.
+Per cambiare tasto, clicca sul tasto mostrato nel pannello: puoi scegliere Shift, Ctrl, Alt oppure **Altro…** e premere il tasto che preferisci (meglio uno che non scrive lettere, come F2) o un tasto laterale del mouse. Il tasto del mouse scelto non fa più «indietro» nel browser finché YomiDesktop è attivo.
+
+Il programma è in inglese di base: l’italiano si sceglie da **Lingua** nel pannello o nella configurazione guidata.
+
+La X del pannello lascia il programma attivo vicino all’orologio. Lo switch in alto, o **Disattiva** nel menu dell’icona, mette in pausa il programma: l’icona diventa in bianco e nero. Per chiuderlo del tutto, usa **Esci** dal menu dell’icona. L’avvio con Windows si gestisce dal pannello.
 
 ## Lettura del testo
 
@@ -18,7 +22,7 @@ La copertura si amplia in generale, senza configurazioni separate per Telegram, 
 
 ## Dizionari e impostazioni
 
-Sono stati copiati gli otto dizionari da Yomitan su Firefox, con ordine, frequenze e tema scuro. Le impostazioni originali del browser restano separate. **Impostazioni Yomitan** apre le preferenze del motore, audio e dizionari.
+Sono stati copiati gli otto dizionari da Yomitan su Firefox, con ordine, frequenze e tema scuro. Le impostazioni originali del browser restano separate. **Opzioni YomiDesktop** apre le preferenze del popup, audio e dizionari. Sono separate da quelle di Yomitan su Firefox: cambiarle qui non tocca il browser.
 
 ## Anki
 
@@ -32,7 +36,7 @@ Il pulsante di aggiunta nel popup funziona con Anki aperto. Per cambiare collega
 
 ## VLC
 
-Il modulo è compilato per VLC 3.0.x a 32 bit presente sul PC. Puoi aprire normalmente i video in VLC oppure usare **Apri un video con VLC**. La consultazione usa i caratteri originali dei sottotitoli testuali. Se il testo originale non è disponibile, il programma può ripiegare sull’OCR dei sottotitoli visibili, compresi quelli impressi nel video.
+Il modulo è compilato per VLC 3.0.x a 32 bit presente sul PC. Basta aprire normalmente i video in VLC. La consultazione usa i caratteri originali dei sottotitoli testuali. Se il testo originale non è disponibile, il programma può ripiegare sull’OCR dei sottotitoli visibili, compresi quelli impressi nel video.
 
 Se cambi architettura o versione di VLC, il modulo va verificato e ricompilato. Per ASS conserva testo e impaginazione di base, ma non riproduce tutti gli effetti tipografici animati complessi.
 

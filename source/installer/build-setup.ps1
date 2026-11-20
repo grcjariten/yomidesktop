@@ -7,5 +7,5 @@ $out = Join-Path $PSScriptRoot 'YomiDesktop-Setup.exe'
   ("/win32manifest:" + (Join-Path $PSScriptRoot 'setup.manifest')) ("/win32icon:" + (Join-Path $root 'native/app.ico')) ("/out:" + $out) `
   /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll `
   (Join-Path $PSScriptRoot 'Setup.cs')
-if ($LASTEXITCODE -ne 0) { throw 'Compilazione Setup non riuscita' }
+if ($LASTEXITCODE -ne 0) { throw 'Setup build failed' }
 Write-Output $out

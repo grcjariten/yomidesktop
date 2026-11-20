@@ -74,7 +74,9 @@ static class Setup
     }
 
     public static string StartMenuLink() { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), AppName + ".lnk"); }
-    public static string UninstallLink() { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "Disinstalla " + AppName + ".lnk"); }
+    public static string UninstallLink() { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "Uninstall " + AppName + ".lnk"); }
+    // Name used by versions up to 2.1 (Italian only).
+    public static string OldUninstallLink() { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "Disinstalla " + AppName + ".lnk"); }
     public static string DesktopLink() { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), AppName + ".lnk"); }
 
     static int Uninstall(string folder)
@@ -82,7 +84,7 @@ static class Setup
         folder = Path.GetFullPath(folder.Trim('"')).TrimEnd('\\');
         if (!File.Exists(Path.Combine(folder, "YomiDesktopRuntime.exe")))
         {
-            MessageBox.Show("Non trovo YomiDesktop in questa cartella:\n" + folder, AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show("YomiDesktop was not found in this folder:\n" + folder, AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return 1;
         }
         // The uninstaller lives inside the folder it deletes: run a temporary copy instead.
@@ -94,8 +96,8 @@ static class Setup
             Process.Start(copy, "/uninstall \"" + folder + "\"");
             return 0;
         }
-        if (MessageBox.Show("Vuoi disinstallare YomiDesktop?", AppName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return 1;
-        bool removeData = MessageBox.Show("Vuoi eliminare anche dizionari e impostazioni?\n\nSe scegli No, li ritrovi se reinstalli.", AppName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+        if (MessageBox.Show("Do you want to uninstall YomiDesktop?", AppName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return 1;
+        bool removeData = MessageBox.Show("Also delete dictionaries and settings?\n\nIf you choose No, you will find them again if you reinstall.", AppName, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
         StopRunning(folder);
         foreach (string entry in Directory.GetFileSystemEntries(folder))
         {
@@ -103,12 +105,12 @@ static class Setup
             try { if (Directory.Exists(entry)) Directory.Delete(entry, true); else File.Delete(entry); } catch { }
         }
         if (removeData) { try { Directory.Delete(folder, true); } catch { } }
-        foreach (string link in new[] { StartMenuLink(), UninstallLink(), DesktopLink() }) { try { File.Delete(link); } catch { } }
+        foreach (string link in new[] { StartMenuLink(), UninstallLink(), OldUninstallLink(), DesktopLink() }) { try { File.Delete(link); } catch { } }
         using (var run = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
             if (run != null) foreach (string name in run.GetValueNames())
                     if ((run.GetValue(name) as string ?? "").IndexOf(folder, StringComparison.OrdinalIgnoreCase) >= 0) run.DeleteValue(name, false);
         Registry.CurrentUser.DeleteSubKeyTree(UninstallKey, false);
-        MessageBox.Show("YomiDesktop è stato disinstallato.", AppName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        MessageBox.Show("YomiDesktop has been uninstalled.", AppName, MessageBoxButtons.OK, MessageBoxIcon.Information);
         return 0;
     }
 
@@ -145,7 +147,7 @@ class InstallForm : Form
 
     public InstallForm()
     {
-        Text = "Installa YomiDesktop";
+        Text = "Install YomiDesktop";
         Font = new Font("Segoe UI", 10f);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -157,22 +159,22 @@ class InstallForm : Form
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
         var title = new Label { Text = "YomiDesktop", Font = new Font("Segoe UI Semibold", 20f), AutoSize = true, Location = new Point(28, 22) };
-        var subtitle = new Label { Text = "Punta una parola giapponese, premi un tasto, capisci.", ForeColor = Color.FromArgb(155, 165, 183), AutoSize = true, Location = new Point(31, 66) };
-        var where = new Label { Text = "Cartella di installazione", ForeColor = Color.FromArgb(174, 185, 202), AutoSize = true, Location = new Point(31, 112) };
+        var subtitle = new Label { Text = "Point at Japanese. Press a key. Understand it.", ForeColor = Color.FromArgb(155, 165, 183), AutoSize = true, Location = new Point(31, 66) };
+        var where = new Label { Text = "Install folder", ForeColor = Color.FromArgb(174, 185, 202), AutoSize = true, Location = new Point(31, 112) };
         folderBox.Text = Setup.DefaultFolder();
         folderBox.SetBounds(31, 136, 360, 28);
         folderBox.BackColor = Color.FromArgb(20, 24, 31); folderBox.ForeColor = ForeColor; folderBox.BorderStyle = BorderStyle.FixedSingle;
-        browseButton.Text = "Cambia…"; browseButton.SetBounds(400, 134, 90, 30); Style(browseButton, false);
+        browseButton.Text = "Change…"; browseButton.SetBounds(400, 134, 90, 30); Style(browseButton, false);
         browseButton.Click += (s, e) =>
         {
-            using (var d = new FolderBrowserDialog { Description = "Scegli dove installare YomiDesktop", SelectedPath = folderBox.Text })
+            using (var d = new FolderBrowserDialog { Description = "Choose where to install YomiDesktop", SelectedPath = folderBox.Text })
                 if (d.ShowDialog(this) == DialogResult.OK) folderBox.Text = Path.Combine(d.SelectedPath, "YomiDesktop");
         };
-        desktopBox.Text = "Crea un collegamento sul desktop"; desktopBox.Checked = true; desktopBox.AutoSize = true; desktopBox.Location = new Point(31, 176);
+        desktopBox.Text = "Create a desktop shortcut"; desktopBox.Checked = true; desktopBox.AutoSize = true; desktopBox.Location = new Point(31, 176);
         bar.SetBounds(31, 214, 459, 8); bar.Visible = false;
         status.SetBounds(31, 228, 459, 22); status.ForeColor = Color.FromArgb(152, 219, 186);
-        status.Text = "Circa 500 MB da scaricare. Dopo, una breve configurazione guidata.";
-        installButton.Text = "Installa"; installButton.SetBounds(370, 254, 120, 34); Style(installButton, true);
+        status.Text = "About 500 MB to download. Then a short guided setup.";
+        installButton.Text = "Install"; installButton.SetBounds(370, 254, 120, 34); Style(installButton, true);
         installButton.Click += (s, e) => { if (finished) Launch(); else Start(); };
         AcceptButton = installButton;
         Controls.AddRange(new Control[] { title, subtitle, where, folderBox, browseButton, desktopBox, bar, status, installButton });
@@ -203,7 +205,7 @@ class InstallForm : Form
     {
         string folder;
         try { folder = Path.GetFullPath(folderBox.Text.Trim()); }
-        catch { MessageBox.Show(this, "La cartella non è valida.", Text); return; }
+        catch { MessageBox.Show(this, "The folder is not valid.", Text); return; }
         installButton.Enabled = browseButton.Enabled = folderBox.Enabled = desktopBox.Enabled = false;
         bar.Visible = true;
         bool desktop = desktopBox.Checked;
@@ -223,14 +225,15 @@ class InstallForm : Form
                 zip = Path.Combine(Path.GetTempPath(), "YomiDesktop-download.zip");
                 Download(zip); downloaded = true;
             }
-            Say("Chiudo YomiDesktop se è aperto…");
+            Say("Closing YomiDesktop if it is open…");
             Setup.StopRunning(folder);
             Directory.CreateDirectory(folder);
             string version = Extract(zip, folder);
-            Say("Creo i collegamenti…");
+            Say("Creating shortcuts…");
             File.Copy(Application.ExecutablePath, Path.Combine(folder, "Uninstall.exe"), true);
             string exe = Path.Combine(folder, "YomiDesktop.exe");
             Setup.Shortcut(Setup.StartMenuLink(), exe, folder);
+            try { File.Delete(Setup.OldUninstallLink()); } catch { }
             Setup.Shortcut(Setup.UninstallLink(), Path.Combine(folder, "Uninstall.exe"), folder);
             if (desktop) Setup.Shortcut(Setup.DesktopLink(), exe, folder);
             Setup.Register(folder, version);
@@ -239,8 +242,8 @@ class InstallForm : Form
             {
                 finished = true;
                 bar.Style = ProgressBarStyle.Continuous; bar.Value = 100;
-                status.Text = "Installato! Ora si apre la configurazione guidata.";
-                installButton.Text = "Apri YomiDesktop"; installButton.Width = 160; installButton.Left = 330; installButton.Enabled = true;
+                status.Text = "Installed! The guided setup opens now.";
+                installButton.Text = "Open YomiDesktop"; installButton.Width = 160; installButton.Left = 330; installButton.Enabled = true;
                 installButton.Tag = folder; installButton.Focus();
             });
         }
@@ -250,8 +253,8 @@ class InstallForm : Form
             {
                 bar.Visible = false;
                 status.ForeColor = Color.FromArgb(255, 181, 169);
-                status.Text = "Installazione non riuscita: " + e.Message;
-                installButton.Text = "Riprova";
+                status.Text = "Installation failed: " + e.Message;
+                installButton.Text = "Try again";
                 installButton.Enabled = browseButton.Enabled = folderBox.Enabled = desktopBox.Enabled = true;
             });
         }
@@ -267,14 +270,14 @@ class InstallForm : Form
             web.DownloadProgressChanged += (s, e) =>
             {
                 long total = e.TotalBytesToReceive > 0 ? e.TotalBytesToReceive : 0;
-                Say(total > 0 ? string.Format("Scarico YomiDesktop… {0} di {1} MB", e.BytesReceived >> 20, total >> 20) : string.Format("Scarico YomiDesktop… {0} MB", e.BytesReceived >> 20), total > 0 ? (int)(e.BytesReceived * 100 / total) : -1);
+                Say(total > 0 ? string.Format("Downloading YomiDesktop… {0} of {1} MB", e.BytesReceived >> 20, total >> 20) : string.Format("Downloading YomiDesktop… {0} MB", e.BytesReceived >> 20), total > 0 ? (int)(e.BytesReceived * 100 / total) : -1);
             };
             web.DownloadFileCompleted += (s, e) => { error = e.Error; done.Set(); };
-            Say("Mi collego a GitHub…");
+            Say("Connecting to GitHub…");
             web.DownloadFileAsync(new Uri(Setup.DownloadUrl), target);
             done.WaitOne();
         }
-        if (error != null) throw new Exception("download non riuscito. Controlla la connessione. (" + error.Message + ")");
+        if (error != null) throw new Exception("download failed. Check your connection. (" + error.Message + ")");
     }
 
     public string ExtractForTest(string zip, string folder) { Directory.CreateDirectory(folder); return Extract(zip, folder); }
@@ -303,7 +306,7 @@ class InstallForm : Form
                     var m = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(target), "\"version\"\\s*:\\s*\"([^\"]+)\"");
                     if (m.Success) version = m.Groups[1].Value;
                 }
-                if (i % 25 == 0) Say(string.Format("Installo… {0}%", (i + 1) * 100 / entries.Count), (i + 1) * 100 / entries.Count);
+                if (i % 25 == 0) Say(string.Format("Installing… {0}%", (i + 1) * 100 / entries.Count), (i + 1) * 100 / entries.Count);
             }
         }
         return version;

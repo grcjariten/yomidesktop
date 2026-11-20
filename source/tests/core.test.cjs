@@ -7,7 +7,7 @@ test('the character offset is preserved and surrogate pairs are not split',()=>{
 test('Anki connection is restricted to loopback',()=>{assert.equal(localAnkiUrl('http://127.0.0.1:8765'),'http://127.0.0.1:8765/');for(const u of ['https://example.com','http://example.com:8765','http://user:secret@localhost:8765'])assert.throws(()=>localAnkiUrl(u));});
 test('Anki preparation never creates note types or notes',async()=>{
   const actions=[];const fetcher=async(_url,request)=>{const body=JSON.parse(request.body);actions.push(body);const result=body.action==='version'?6:body.action==='modelNames'?[]:null;return {ok:true,json:async()=>({result,error:null})};};
-  await assert.rejects(anki.prepare('http://127.0.0.1:8765','','Parole',fetcher),/manca il tipo di nota/);assert(!actions.some(a=>['createModel','addNote','createDeck'].includes(a.action)));
+  await assert.rejects(anki.prepare('http://127.0.0.1:8765','','Parole',fetcher),/missing the note type/);assert(!actions.some(a=>['createModel','addNote','createDeck'].includes(a.action)));
 });
 test('existing Firefox note type is checked and never overwritten',async()=>{
   const actions=[];const fetcher=async(_url,request)=>{const b=JSON.parse(request.body);actions.push(b.action);return {ok:true,json:async()=>({result:b.action==='version'?6:b.action==='modelNames'?[anki.modelName]:b.action==='modelFieldNames'?Object.keys(anki.fieldMarkers):null,error:null})};};const r=await anki.prepare('http://localhost:8765','','Parole',fetcher);assert.equal(r.deck,'Parole');assert.equal(r.model,'Kaishi 1.5k');assert(!actions.includes('createModel'));assert(!actions.includes('updateModelTemplates'));assert(!actions.includes('addNote'));

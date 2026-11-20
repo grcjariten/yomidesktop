@@ -16,7 +16,7 @@ await Application.main(true,async(application)=>{
   const profiles=new DisplayProfileSelection(display);await profiles.prepare();
   display.setHistorySettings({clearable:true,useBrowserHistory:false});
   const ocrBadge=document.createElement('span');ocrBadge.id='desktop-ocr';ocrBadge.textContent='OCR';ocrBadge.hidden=true;
-  ocrBadge.title='Testo riconosciuto localmente dallo schermo';document.body.append(ocrBadge);
+  ocrBadge.title='Text recognized locally from the screen';document.body.append(ocrBadge);
   let activeRender=null;
   const settleRender=(result,error)=>{
     if(!activeRender)return;
@@ -41,7 +41,7 @@ await Application.main(true,async(application)=>{
       if(id!==generation)return {stale:true};
       if(!dictionaryEntries.length)return {count:0};
       const complete=new Promise((resolve,reject)=>{
-        const timer=setTimeout(()=>settleRender(null,new Error('Il popup non ha completato la visualizzazione')),8000);
+        const timer=setTimeout(()=>settleRender(null,new Error('The popup did not finish rendering')),8000);
         activeRender={resolve,reject,timer};
       });
       const sentence=extractSentence(payload,originalTextLength,options.sentenceParsing);

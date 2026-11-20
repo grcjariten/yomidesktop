@@ -35,3 +35,4 @@ button.link{background:none;border:none;color:#84b7f5;padding:0 4px;text-decorat
 .wizard-nav #next{padding:10px 22px;font-size:13px}
 @media (max-width:620px){.steps{display:none}.choices,.dict-list{grid-template-columns:1fr}}
 .step p kbd{font-size:14px;padding:0 7px;border-bottom-width:2px}
+.language{display:flex;align-items:center;gap:6px;margin-left:12px;font-size:12px}

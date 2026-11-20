@@ -13,19 +13,19 @@ await Application.main(true,async(application)=>{
     counts:async()=>{const names=Array.from(db.objectStoreNames);const counts={};for(const name of names){counts[name]=await new Promise((resolve,reject)=>{const q=db.transaction(name).objectStore(name).count();q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});}return counts;},
     importChunk:(name,rows,base=0)=>new Promise((resolve,reject)=>{
       const tx=db.transaction(name,'readwrite');const store=tx.objectStore(name);
-      tx.oncomplete=()=>resolve(rows.length);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Importazione interrotta'));
+      tx.oncomplete=()=>resolve(rows.length);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Import interrupted'));
       for(const [index,row] of rows.entries()){if(row.content?.$arrayBuffer){const b=atob(row.content.$arrayBuffer);row.content=Uint8Array.from(b,c=>c.charCodeAt(0)).buffer;}if(store.keyPath===null)store.put(row,base+index+1);else store.put(row);}
     }),
     clear:async()=>{for(const name of Array.from(db.objectStoreNames))await new Promise((resolve,reject)=>{const tx=db.transaction(name,'readwrite');tx.objectStore(name).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});},
     notify:()=>application.api.triggerDatabaseUpdated('import','desktop'),
     // Setup wizard: download a Yomitan dictionary and enable it, like Yomitan's own import.
     importUrl:async(url)=>{
-      const response=await fetch(url,{cache:'no-store'});if(!response.ok)throw new Error('Download non riuscito ('+response.status+')');
+      const response=await fetch(url,{cache:'no-store'});if(!response.ok)throw new Error('Download failed ('+response.status+')');
       const archive=await response.arrayBuffer();
       const full=await application.api.optionsGetFull();
       const details={prefixWildcardsSupported:full.global.database.prefixWildcardsSupported,yomitanVersion:chrome.runtime.getManifest().version};
       const {result,errors}=await new DictionaryWorker().importDictionary(archive,details,()=>{});
-      if(!result)throw new Error((errors||[]).map(e=>e?.message||String(e)).join('; ')||'Importazione non riuscita');
+      if(!result)throw new Error((errors||[]).map(e=>e?.message||String(e)).join('; ')||'Import failed');
       const latest=await application.api.optionsGetFull();
       for(const profile of latest.profiles){
         const o=profile.options;

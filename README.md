@@ -22,7 +22,7 @@ Anywhere on your Windows screen — videos, games, visual novels, chats, images,
 Yomitan is the best pop-up dictionary for learning Japanese — but it only lives in the browser.
 **YomiDesktop takes it out of the browser and puts it on your whole desktop.**
 
-Hover any Japanese word, in any program, press **Shift** (or Ctrl, or Alt — your choice), and the real Yomitan popup appears right there: readings, meanings, frequency, pitch accent, audio, and one-click Anki cards. No copy-paste, no switching windows, no texthooker, no per-app setup.
+Hover any Japanese word, in any program, press **Shift** (or Ctrl, Alt, any other key or a mouse side button — your choice), and the real Yomitan popup appears right there: readings, meanings, frequency, pitch accent, audio, and one-click Anki cards. No copy-paste, no switching windows, no texthooker, no per-app setup.
 
 ## One tool, every app
 
@@ -47,13 +47,13 @@ A small **OCR** label in the popup tells you when the text came from recognition
 
 ## Features
 
-- **Your key, your choice:** cursor + **Shift**, **Ctrl** or **Alt**. Press it again, press **Esc**, click elsewhere or move away to close. You can move into the popup to use its buttons.
+- **Your key, your choice:** cursor + **Shift**, **Ctrl**, **Alt**, any other key (like F2) or a **mouse side button**. Click the key shown in the panel to change it. Press it again, press **Esc**, click elsewhere or move away to close. You can move into the popup to use its buttons.
 - **Guided setup:** a short wizard picks your key, installs the recommended dictionaries and connects Anki step by step. You can run it again any time.
 - **Your Yomitan dictionaries:** import any Yomitan-format dictionary (JMdict/Jitendex, frequency lists, pitch accent…) and keep their order and settings.
 - **Anki in one click:** works with AnkiConnect, with the same card setup as Yomitan, plus the word's frequency and its source (video title or window name) in the notes.
 - **VLC integration:** open videos normally or from YomiDesktop and look up words directly in the subtitles.
 - **Private and offline:** everything runs on your PC. Screen areas are processed in memory and never saved or sent anywhere. No account, no cloud, no clipboard tricks.
-- **Lives in the tray:** starts with Windows if you want, and stays out of your way until you press Shift.
+- **Lives in the tray:** starts with Windows if you want, and stays out of your way until you press your key. Turn it off with the switch in the panel or **Turn off** in the tray menu: the tray icon turns black and white.
 
 ## Download and install
 
@@ -61,12 +61,12 @@ A small **OCR** label in the popup tells you when the text came from recognition
 2. Run it. The app isn't signed yet, so Windows may say *"Windows protected your PC"*: click **More info → Run anyway**.
 3. Click **Install**. No administrator rights needed; it downloads about 500 MB and creates the shortcuts.
 4. The **guided setup** opens by itself:
-   - **Key** — choose Shift, Ctrl or Alt.
+   - **Key** — choose Shift, Ctrl or Alt (any other key or a mouse side button later, from the panel).
    - **Dictionaries** — the recommended set is already ticked: just press **Next**. They're downloaded from their official sources.
    - **Anki** — three short steps to connect it (install Anki, add AnkiConnect, check). Or skip.
 5. Point at Japanese text anywhere and press your key.
 
-Uninstall from **Windows Settings → Apps**, from **Start → Disinstalla YomiDesktop**, or with `Uninstall.exe` in the program folder. Updating is just running the setup again: your dictionaries and settings are kept.
+Uninstall from **Windows Settings → Apps**, from **Start → Uninstall YomiDesktop**, or with `Uninstall.exe` in the program folder. Updating is just running the setup again: your dictionaries and settings are kept.
 
 <details><summary>Recommended dictionaries</summary>
 
@@ -78,10 +78,10 @@ Uninstall from **Windows Settings → Apps**, from **Start → Disinstalla YomiD
 | BCCWJ, JPDB | How common a word is in writing and in media |
 | [Jiten](https://jiten.moe) (general, YouTube, Drama) | How common a word is in real content |
 
-You can untick any of them, or import any other Yomitan dictionary later from **Yomitan settings**.
+You can untick any of them, or import any other Yomitan dictionary later from **YomiDesktop options**.
 </details>
 
-> The interface is currently in Italian. The popup and dictionaries work in whatever language your dictionaries use.
+> The interface is in English, with Italian available: pick it from **Language** in the panel or in the guided setup. The popup and dictionaries work in whatever language your dictionaries use.
 
 ## Honest limits
 

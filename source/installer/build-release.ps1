@@ -20,16 +20,12 @@ foreach ($personal in 'data', 'anki') { if (Test-Path (Join-Path $stage $persona
 @'
 YomiDesktop
 
-1. Tieni la cartella intera. Apri YomiDesktop.exe.
-2. Si apre la configurazione guidata: tasto, dizionari, Anki.
-3. Punta una parola giapponese in qualsiasi programma e premi il tasto scelto.
-
----
-
 1. Keep the whole folder. Open YomiDesktop.exe.
 2. The guided setup opens: key, dictionaries, Anki.
 3. Point at any Japanese word in any app and press your key.
-'@ | Set-Content -Encoding utf8 (Join-Path $stage 'INIZIA-QUI.txt')
+
+Italiano: la lingua si cambia da "Language" nel pannello.
+'@ | Set-Content -Encoding utf8 (Join-Path $stage 'START-HERE.txt')
 
 $zip = Join-Path $Out 'YomiDesktop-Windows-x64.zip'
 if (Test-Path $zip) { Remove-Item $zip -Force }

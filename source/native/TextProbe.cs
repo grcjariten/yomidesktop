@@ -50,7 +50,10 @@ public static class TextProbe {
     static volatile int contextExtent=200;
     static long sequence=0;
     static int shiftPulse=0,escapePulse=0;
-    static volatile int scanKey=0x10; // Shift, Ctrl or Alt, chosen in the setup
+    static volatile int scanKey=0x10; // Shift, Ctrl, Alt, any other key (not Esc) or the middle/side mouse buttons (0x04-0x06)
+    static volatile bool mouseHeld=false,mouseHookReady=false;
+    static KeyboardHook mouseCallback=OnMouse;
+    static bool IsMouse(int key){return key>=0x04&&key<=0x06;}
     static int ModifierKey(int key){switch(key){case 0xA0:case 0xA1:return 0x10;case 0xA2:case 0xA3:return 0x11;case 0xA4:case 0xA5:return 0x12;default:return key;}}
     static uint hookThreadId;
     static volatile bool keyboardHookReady=false;
@@ -70,13 +73,25 @@ public static class TextProbe {
         if(code>=0)CaptureShortcut(Marshal.ReadInt32(data),message.ToInt64());
         return CallNextHookEx(IntPtr.Zero,code,message,data);
     }
+    // Mouse scan button: tracked here and swallowed, so the click does not also go back a page in browsers.
+    static IntPtr OnMouse(int code,IntPtr message,IntPtr data){
+        int key=scanKey;
+        if(code>=0&&enabled&&IsMouse(key)){
+            int m=message.ToInt32(),button=0;bool down=false;
+            if(m==0x207||m==0x208){button=0x04;down=m==0x207;}
+            else if(m==0x20B||m==0x20C){int x=(Marshal.ReadInt32(data,8)>>16)&0xFFFF;button=x==1?0x05:x==2?0x06:0;down=m==0x20B;}
+            if(button==key){if(down){mouseHeld=true;Interlocked.Exchange(ref shiftPulse,1);}else mouseHeld=false;return new IntPtr(1);}
+        }
+        return CallNextHookEx(IntPtr.Zero,code,message,data);
+    }
     static void Shortcuts(){
         hookThreadId=GetCurrentThreadId();var hook=SetWindowsHookEx(13,keyboardCallback,GetModuleHandle(null),0);
+        var mouseHook=SetWindowsHookEx(14,mouseCallback,GetModuleHandle(null),0);mouseHookReady=mouseHook!=IntPtr.Zero;
         if(hook==IntPtr.Zero){Send(new{kind="shortcut-hook",ok=false});return;}
         keyboardHookReady=true;
         Send(new{kind="shortcut-hook",ok=true});
         try{MSG message;while(!exit&&GetMessage(out message,IntPtr.Zero,0,0)>0){}}
-        finally{keyboardHookReady=false;UnhookWindowsHookEx(hook);}
+        finally{keyboardHookReady=false;mouseHookReady=false;UnhookWindowsHookEx(hook);if(mouseHook!=IntPtr.Zero)UnhookWindowsHookEx(mouseHook);}
     }
     static void Send(object o) { lock(io) { Console.WriteLine(json.Serialize(o));Console.Out.Flush(); } }
     static string WindowTitle(IntPtr h) { var s=new StringBuilder(1000);GetWindowText(h,s,1000);return s.ToString(); }
@@ -214,7 +229,7 @@ public static class TextProbe {
             string line;while((line=Console.ReadLine())!=null) {
                 try{
                     var d=json.Deserialize<Dictionary<string,object>>(line);
-                    if(d.ContainsKey("scanKey")){int k=Convert.ToInt32(d["scanKey"]);if(k==0x10||k==0x11||k==0x12)scanKey=k;}
+                    if(d.ContainsKey("scanKey")){int k=Convert.ToInt32(d["scanKey"]);if(k>=0x04&&k<=0xFE&&k!=0x07&&k!=0x1B){if(k!=scanKey)mouseHeld=false;scanKey=k;}}
                     if(d.ContainsKey("enabled"))enabled=Convert.ToBoolean(d["enabled"]);
                     if(d.ContainsKey("extent"))contextExtent=Math.Max(50,Math.Min(2000,Convert.ToInt32(d["extent"])));
                     if(d.ContainsKey("ocr"))ocrEnabled=Convert.ToBoolean(d["ocr"]);
@@ -238,13 +253,14 @@ public static class TextProbe {
         while(!exit) {
             POINT p;GetCursorPos(out p);
             IntPtr fg=GetForegroundWindow();if(fg!=previousForeground){uint fpid;GetWindowThreadProcessId(fg,out fpid);Send(new{kind="foreground",pid=fpid,hwnd=fg.ToInt64()});previousForeground=fg;}
-            bool shift=(GetAsyncKeyState(scanKey)&0x8000)!=0,esc=(GetAsyncKeyState(0x1b)&0x8000)!=0;
+            if(!enabled)mouseHeld=false;int key=scanKey;bool hooked=IsMouse(key)?mouseHookReady:keyboardHookReady;
+            bool shift=IsMouse(key)&&mouseHookReady?mouseHeld:(GetAsyncKeyState(key)&0x8000)!=0,esc=(GetAsyncKeyState(0x1b)&0x8000)!=0;
             bool shiftTap=Interlocked.Exchange(ref shiftPulse,0)!=0,escapeTap=Interlocked.Exchange(ref escapePulse,0)!=0;
             if(p.X!=px||p.Y!=py){Send(new{kind="pointer-move",x=p.X,y=p.Y});px=p.X;py=p.Y;}
-            if(shiftTap||(!keyboardHookReady&&shift&&!previousShift)){gesture++;Send(new{kind="shift-down",gesture=gesture,x=p.X,y=p.Y});}
+            if(shiftTap||(!hooked&&shift&&!previousShift)){gesture++;Send(new{kind="shift-down",gesture=gesture,x=p.X,y=p.Y});}
             bool mouse=(GetAsyncKeyState(0x01)&0x8000)!=0;if(mouse&&!previousMouse)Send(new{kind="pointer-down",x=p.X,y=p.Y});previousMouse=mouse;
             if((esc&&!previousEsc)||escapeTap)Send(new{kind="escape"});previousEsc=esc;
-            if((gesture>0||!keyboardHookReady)&&(shift||shiftTap)&&enabled&&(p.X!=lx||p.Y!=ly||!previousShift||shiftTap)) {
+            if((gesture>0||!hooked)&&(shift||shiftTap)&&enabled&&(p.X!=lx||p.Y!=ly||!previousShift||shiftTap)) {
                 long seq=Interlocked.Increment(ref sequence);
                 IntPtr pointed=WindowFromPoint(p);uint pointedPid;GetWindowThreadProcessId(pointed,out pointedPid);long window=GetAncestor(pointed,2).ToInt64();
                 Send(new{kind="cursor",x=p.X,y=p.Y,pid=pointedPid,hwnd=window,shift=true,sequence=seq,gesture=gesture,delegated=ProcessName(pointedPid).Equals("vlc",StringComparison.OrdinalIgnoreCase)});
