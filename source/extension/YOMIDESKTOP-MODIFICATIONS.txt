@@ -4,3 +4,4 @@ Desktop adapters added under desktop/.
 Only upstream JavaScript modification: suppress browser installation welcome tab in backend.js.
 All dictionary, morphology, rendering, audio, Anki, settings code remains upstream.
 settings.html loads /desktop/settings.js, which shows the app name (YomiDesktop) in place of Yomitan in the visible text; the credits page keeps the original name.
+desktop/settings.js also installs a .zip dropped anywhere on the options page (Yomitan accepts drops only on its small drop box; elsewhere the window tried to save the file).

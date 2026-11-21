@@ -41,7 +41,8 @@ function errorMessage(e){return e?.message||String(e);}
 function trustedWindow(e){return [mainWindow,popup,engine,...BrowserWindow.getAllWindows()].some(w=>w&&!w.isDestroyed()&&w.webContents===e.sender&&(/^(file:|chrome-extension:)/.test(e.sender.getURL())));}
 function safeWeb(w){
   w.webContents.setWindowOpenHandler(({url})=>{if(url.startsWith(`chrome-extension://${extensionId}/`)){openEnginePage(url);return {action:'deny'};}if(/^https?:\/\//.test(url))shell.openExternal(url);return {action:'deny'};});
-  w.webContents.on('will-navigate',(event,url)=>{if(!url.startsWith('file:')&&!url.startsWith(`chrome-extension://${extensionId}/`)){event.preventDefault();if(/^https?:\/\//.test(url))shell.openExternal(url);}});
+  w.webContents.on('will-navigate',(event,url)=>{if(url.startsWith('file:')&&!/\.html([?#]|$)/i.test(url)){event.preventDefault();return;}// a dropped file must not replace the page or open a "Save as" box
+  if(!url.startsWith('file:')&&!url.startsWith(`chrome-extension://${extensionId}/`)){event.preventDefault();if(/^https?:\/\//.test(url))shell.openExternal(url);}});
   w.webContents.on('render-process-gone',(_event,details)=>{log('renderer-gone',details.reason);if(!shuttingDown){setStatus(phase('phase.restart'));w.webContents.reload();}});
 }
 function windowOptions(extra={}){return {show:false,icon:path.join(__dirname,'extension','images','icon128.png'),backgroundColor:'#1d2027',webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,spellcheck:false,backgroundThrottling:false},...extra};}
@@ -212,6 +213,7 @@ async function handleCommand(event,name,payload={}){
       popupSize={width:Math.max(300,Math.round(p.general.popupWidth*p.general.popupScalingFactor)),height:Math.max(200,Math.round(p.general.popupHeight*p.general.popupScalingFactor))};
       sendOwnPids();setStatus({dictionaries:await bridge('dictionaries')});return true;
     }
+    case 'import-progress':{if(event.sender!==engine?.webContents||!status.setupProgress)return false;setStatus({setupProgress:{...status.setupProgress,part:Math.max(0,Math.min(1,Number(payload.part)||0))}});return true;}
     case 'status':return {...status,ocr:ocrText(),scanKeyLabel:scanKey().label,preferences:{...preferences,ankiKey:undefined},version:app.getVersion()};
     case 'toggle':toggleEnabled(payload.enabled);return status;
     case 'ocr-toggle':preferences.ocrEnabled=Boolean(payload.enabled);savePrefs();sendOwnPids();setStatus({ocr:ocrText()});return true;

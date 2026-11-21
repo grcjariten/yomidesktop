@@ -49,12 +49,12 @@ async function installDictionaries(){
   await waitForEngine();
   const ids=[...document.querySelectorAll('#dict-list input:checked:not(:disabled)')].map(b=>b.value);
   if(!ids.length)return true;
-  setBusy(true,t('setup.dontClose'));$('dict-progress').hidden=false;$('dict-bar').max=ids.length;$('dict-bar').value=0;
+  $('dict-total').textContent='';setBusy(true,t('setup.dontClose'));$('dict-progress').hidden=false;$('dict-bar').max=ids.length*100;$('dict-bar').value=0;
   try{
     const results=await host.command('install-dictionaries',{ids});
     for(const r of results){const tag=$('tag-'+r.id);if(tag){tag.textContent=t(r.ok?'setup.dictOk':'setup.dictFail');tag.className='tag '+(r.ok?'ok':'err');tag.title=r.message||'';}}
     await loadInfo();
-    const failed=results.filter(r=>!r.ok);$('dict-bar').value=ids.length;
+    const failed=results.filter(r=>!r.ok);$('dict-bar').value=ids.length*100;
     if(failed.length){$('dict-status').textContent=t('setup.dictSomeFailed',{n:failed.length});$('dict-status').className='bad';return false;}
     $('dict-status').textContent=t('setup.dictDone');$('dict-status').className='good';return true;
   }catch(e){$('dict-status').textContent=e.message;$('dict-status').className='bad';return false;}
@@ -91,6 +91,6 @@ $('skip').onclick=()=>{if(!busy)show(4);};
 $('anki-check').onclick=()=>checkAnki();
 $('copy-code').onclick=async()=>{try{await navigator.clipboard.writeText('2055492159');$('copy-code').textContent=t('setup.copied');}catch{$('copy-code').textContent=t('setup.copyFail');}};
 document.querySelectorAll('[data-link]').forEach(b=>{b.onclick=()=>host.command('open-link',{id:b.dataset.link});});
-host.onStatus(s=>{const p=s.setupProgress;if(p&&current===2){$('dict-bar').value=p.index;$('dict-status').className='';$('dict-status').textContent=t('setup.dictProgress',{title:p.title,i:p.index+1,n:p.total});}});
+host.onStatus(s=>{const p=s.setupProgress;if(p&&current===2){const part=p.part||0;$('dict-bar').value=Math.round((p.index+part)*100);$('dict-status').className='';$('dict-status').textContent=t(part<0.15?'setup.dictDownloading':'setup.dictProgress',{title:p.title,i:p.index+1,n:p.total,pct:Math.round(part*100)});}});
 setLanguage('en');
 loadInfo().then(i=>{setLanguage(i.language);show(0);}).catch(()=>show(0));

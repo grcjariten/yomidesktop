@@ -19,12 +19,17 @@ await Application.main(true,async(application)=>{
     clear:async()=>{for(const name of Array.from(db.objectStoreNames))await new Promise((resolve,reject)=>{const tx=db.transaction(name,'readwrite');tx.objectStore(name).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});},
     notify:()=>application.api.triggerDatabaseUpdated('import','desktop'),
     // Setup wizard: download a Yomitan dictionary and enable it, like Yomitan's own import.
+    // Progress goes to the wizard as one number from 0 to 1: download 0-0.15, check 0.15-0.3, writing 0.3-1.
     importUrl:async(url)=>{
+      let sent=-1,last=0;const report=(part)=>{part=Math.max(0,Math.min(1,part));const now=Date.now();if(part-sent<0.01&&now-last<1000)return;sent=part;last=now;window.desktopHost.command('import-progress',{part}).catch(()=>{});};
       const response=await fetch(url,{cache:'no-store'});if(!response.ok)throw new Error('Download failed ('+response.status+')');
-      const archive=await response.arrayBuffer();
+      const size=Number(response.headers.get('content-length'))||0;const chunks=[];let received=0;
+      for(const reader=response.body.getReader();;){const {done,value}=await reader.read();if(done)break;chunks.push(value);received+=value.length;if(size)report(0.15*received/size);}
+      const archive=await new Blob(chunks).arrayBuffer();report(0.15);
+      let phase=0;const onProgress=({index,count,nextStep})=>{if(nextStep&&count>0)phase++;if(phase&&count>0)report(phase===1?0.15+0.15*index/count:0.3+0.7*index/count);};
       const full=await application.api.optionsGetFull();
       const details={prefixWildcardsSupported:full.global.database.prefixWildcardsSupported,yomitanVersion:chrome.runtime.getManifest().version};
-      const {result,errors}=await new DictionaryWorker().importDictionary(archive,details,()=>{});
+      const {result,errors}=await new DictionaryWorker().importDictionary(archive,details,onProgress);
       if(!result)throw new Error((errors||[]).map(e=>e?.message||String(e)).join('; ')||'Import failed');
       const latest=await application.api.optionsGetFull();
       for(const profile of latest.profiles){

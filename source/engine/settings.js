@@ -10,3 +10,14 @@ function rename(root){
 document.title='YomiDesktop';
 rename(document.body);
 new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes){if(n.nodeType===Node.TEXT_NODE){if(n.nodeValue.includes('Yomitan')&&!skip(n))n.nodeValue=n.nodeValue.replaceAll('Yomitan','YomiDesktop');}else if(n.nodeType===Node.ELEMENT_NODE)rename(n);}}).observe(document.body,{childList:true,subtree:true});
+// A .zip dropped anywhere on the page is installed as a dictionary, as if dropped on Yomitan's small drop box
+// (otherwise the window would try to save the file). Yomitan's own box keeps handling its drops.
+addEventListener('dragover',e=>{if(e.dataTransfer?.types.includes('Files'))e.preventDefault();});
+addEventListener('drop',e=>{
+  if(e.defaultPrevented||!e.dataTransfer?.files.length)return;
+  e.preventDefault();
+  const zips=[...e.dataTransfer.files].filter(f=>/\.zip$/i.test(f.name));const input=document.querySelector('#dictionary-import-file-input');
+  if(!zips.length||!input||input.disabled)return;
+  document.querySelector('.settings-item[data-modal-action="show,dictionaries"]')?.click();// shows the dictionary list and its progress bar
+  const files=new DataTransfer();for(const f of zips)files.items.add(f);input.files=files.files;input.dispatchEvent(new Event('change'));
+});
