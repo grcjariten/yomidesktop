@@ -43,8 +43,8 @@ If an app shows Japanese on screen, YomiDesktop can almost certainly read it.
 <table>
   <tr>
     <td width="50%" align="center" valign="top">
-      <img src="docs/screenshots/vlc.png" alt="YomiDesktop popup on text inside a video playing in VLC">
-      <br><sub>🎬 <strong>VLC</strong> — even text burned into the video</sub>
+      <img src="docs/screenshots/vlc.png" alt="YomiDesktop popup on a Japanese subtitle in VLC">
+      <br><sub>🎬 <strong>VLC</strong> — subtitle files read as real text; burned-in subtitles via OCR</sub>
     </td>
     <td width="50%" align="center" valign="top">
       <img src="docs/screenshots/manga.png" alt="YomiDesktop popup on a manga page">
