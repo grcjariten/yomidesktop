@@ -17,6 +17,7 @@ en:{
   'anki.server':'Address','anki.deck':'Deck','anki.key':'API key, if set','anki.test':'Test connection','anki.prepare':'Prepare cards',
   'anki.connecting':'Connecting…','anki.answers':'AnkiConnect answers.','anki.ready':'Deck and note type ready. Use the + button in the popup to add words.',
   'autostart':'Start with Windows','wizard':'Guided setup','language':'Language',
+  'promo':'Review Japanese grammar with Pera Pera · Android','promo.title':'From the author of YomiDesktop · opens Google Play',
   'note.close':'{key} or Esc close the popup · The X keeps the dictionary running.',
   'note.ocr':'The original text comes first. When it can’t be read directly, OCR recognizes the Japanese on screen: also in images and messaging apps. Recognition can be wrong on blurry characters.',
   // Status (main process)
@@ -71,6 +72,7 @@ it:{
   'anki.server':'Indirizzo','anki.deck':'Mazzo','anki.key':'Chiave API, se impostata','anki.test':'Verifica collegamento','anki.prepare':'Prepara le carte',
   'anki.connecting':'Collegamento…','anki.answers':'AnkiConnect risponde.','anki.ready':'Mazzo e modello pronti. Usa il pulsante + nel popup per aggiungere le parole.',
   'autostart':'Avvia con Windows','wizard':'Configurazione guidata','language':'Lingua',
+  'promo':'Ripassa la grammatica giapponese con Pera Pera · Android','promo.title':'Dall’autore di YomiDesktop · apre Google Play',
   'note.close':'{key} o Esc chiudono il popup · La X lascia il dizionario attivo.',
   'note.ocr':'Il testo originale ha la precedenza. Quando non è leggibile direttamente, l’OCR riconosce il giapponese sullo schermo: anche nelle immagini e nelle app di messaggistica. Il riconoscimento può sbagliare sui caratteri poco nitidi.',
   'phase.start':'Avvio…','phase.ready':'Pronto · tieni premuto {key} sul testo','phase.restart':'Riavvio del pannello…',

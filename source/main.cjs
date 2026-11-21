@@ -33,7 +33,7 @@ let popupSize={width:400,height:250},scanLength=16,contextExtent=200,requestId=0
 let nativeBusySince=0,watchdog,vlcBridge,lastSourcePid=0,lastSourceWindow=0,lastUnsupported='';
 const ownerRequests=new Map();
 Object.assign(status,phase('phase.start'),{anki:ankiText()});
-const popupSession=new PopupSession({visible:()=>Boolean(popup&&!popup.isDestroyed()&&popup.isVisible()),bounds:()=>popup.getBounds(),close:()=>hidePopup()});
+const popupSession=new PopupSession({visible:()=>popupVisible(),bounds:()=>popup.getBounds(),close:()=>hidePopup()});
 const logFile=path.join(data,'diagnostics.log');
 function log(event,details=''){fs.appendFileSync(logFile,`${new Date().toISOString()} ${event} ${String(details).slice(0,1200)}\n`);}
 function setStatus(update){Object.assign(status,update);if(mainWindow&&!mainWindow.isDestroyed())mainWindow.webContents.send('desktop:status',status);if(tray)refreshTray();}
@@ -45,9 +45,9 @@ function safeWeb(w){
   w.webContents.on('render-process-gone',(_event,details)=>{log('renderer-gone',details.reason);if(!shuttingDown){setStatus(phase('phase.restart'));w.webContents.reload();}});
 }
 function windowOptions(extra={}){return {show:false,icon:path.join(__dirname,'extension','images','icon128.png'),backgroundColor:'#1d2027',webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,spellcheck:false,backgroundThrottling:false},...extra};}
-function showPage(page){const [width,height]=page==='setup.html'?[680,730]:[460,760];const b=mainWindow.getBounds();mainWindow.setMinimumSize(page==='setup.html'?540:400,480);if(b.width!==width||b.height!==height)mainWindow.setBounds({x:b.x+Math.round((b.width-width)/2),y:b.y,width,height});mainWindow.loadFile(path.join(__dirname,'ui',page));}
+function showPage(page){const [width,height]=page==='setup.html'?[680,730]:[460,830];const b=mainWindow.getBounds();mainWindow.setMinimumSize(page==='setup.html'?540:400,480);if(b.width!==width||b.height!==height)mainWindow.setBounds({x:b.x+Math.round((b.width-width)/2),y:b.y,width,height});mainWindow.loadFile(path.join(__dirname,'ui',page));}
 function createMain(){
-  mainWindow=new BrowserWindow(windowOptions({width:460,height:760,minWidth:400,minHeight:480,title:'YomiDesktop',autoHideMenuBar:true}));safeWeb(mainWindow);
+  mainWindow=new BrowserWindow(windowOptions({width:460,height:830,minWidth:400,minHeight:480,title:'YomiDesktop',autoHideMenuBar:true}));safeWeb(mainWindow);
   showPage(preferences.setupDone?'index.html':'setup.html');
   mainWindow.on('close',e=>{if(!shuttingDown&&!testMode){e.preventDefault();mainWindow.hide();}});
   mainWindow.webContents.on('did-finish-load',()=>mainWindow.webContents.send('desktop:status',status));
@@ -122,13 +122,19 @@ async function startEngine(){
   popup.setAlwaysOnTop(true,'screen-saver');
   popup.webContents.on('console-message',(_event,d)=>{if(d.level==='error'||d.level===3)log('popup-error',d.message);});
   await popup.loadURL(`chrome-extension://${extensionId}/desktop/popup.html`);await waitFor(popup,'Boolean(window.yomiDesktop)');popupReady=true;ocrTitle();
-  popup.on('resize',()=>{if(popup.isVisible()){const b=popup.getBounds();popupSize={width:b.width,height:b.height};}});
+  popup.on('resize',()=>{if(popupVisible()){const b=popup.getBounds();popupSize={width:b.width,height:b.height};}});
   popup.on('close',e=>{if(!shuttingDown){e.preventDefault();hidePopup();}});
   engineReady=true;sendOwnPids();
 }
 function sendOwnPids(){if(!native?.stdin?.writable)return;const pids=[process.pid,...BrowserWindow.getAllWindows().map(w=>w.webContents.getOSProcessId())];native.stdin.write(JSON.stringify({pids,enabled:preferences.enabled,extent:contextExtent,ocr:preferences.ocrEnabled,scanKey:scanKey().code})+'\n');}
 function requestOcr(event){if(!preferences.ocrEnabled||!native?.stdin?.writable||!popupSession.accepts(event))return;native.stdin.write(JSON.stringify({ocrPoint:{x:event.x,y:event.y,sequence:event.sequence,gesture:event.gesture,window:event.hwnd}})+'\n');}
-function hidePopup(){popupSession.reset();requestId++;lastQueryKey='';if(popup&&!popup.isDestroyed())popup.hide();vlcBridge?.release();}
+// A non-activating window (focusable:false, so full-screen games keep the focus) stops receiving
+// mouse clicks once it has been hidden and shown again. So the popup is shown once and then only
+// moved off screen and back: popupOpen says whether the user can see it.
+let popupOpen=false;
+const popupVisible=()=>Boolean(popupOpen&&popup&&!popup.isDestroyed());
+function parkPopup(){const b=popup.getBounds();popup.setBounds({x:-32000,y:-32000,width:b.width,height:b.height});}
+function hidePopup(){popupSession.reset();requestId++;lastQueryKey='';if(popup&&!popup.isDestroyed()&&popupOpen){popupOpen=false;parkPopup();}vlcBridge?.release();}
 async function lookup(raw){
   if(!engineReady||!preferences.enabled||!popupReady)return;
   if(!popupSession.accepts({gesture:raw.nativeGesture,sequence:raw.nativeSequence}))return;
@@ -137,7 +143,7 @@ async function lookup(raw){
   const key=source.source+'\0'+source.text+'\0'+source.offset;
   const pointer=screen.screenToDipPoint({x:source.x,y:source.y});
   const anchor=source.rect?screen.screenToDipRect(null,{x:Math.round(source.rect.x),y:Math.round(source.rect.y),width:Math.round(source.rect.width),height:Math.round(source.rect.height)}):{...pointer,width:1,height:1};
-  if(key===lastQueryKey){if(popup.isVisible()){popupSession.begin(pointer,anchor,source.nativeGesture!==undefined);popupSession.shown(anchor);popup.moveTop();}return;}
+  if(key===lastQueryKey){if(popupVisible()){popupSession.begin(pointer,anchor,source.nativeGesture!==undefined);popupSession.shown(anchor);popup.moveTop();}return;}
   popupSession.begin(pointer,anchor,source.nativeGesture!==undefined);
   const id=++requestId;lastQueryKey=key;const started=Date.now();
   try{
@@ -147,7 +153,7 @@ async function lookup(raw){
     const p=screen.screenToDipPoint({x:source.x,y:source.y});
     const a=source.rect?screen.screenToDipRect(null,{x:Math.round(source.rect.x),y:Math.round(source.rect.y),width:Math.round(source.rect.width),height:Math.round(source.rect.height)}):{...p,width:1,height:1};
     const area=screen.getDisplayNearestPoint(p).workArea;
-    popup.setBounds(placePopup(a,popupSize,area));popup.showInactive();popup.moveTop();
+    popup.setBounds(placePopup(a,popupSize,area));if(!popup.isVisible())popup.showInactive();popupOpen=true;popup.moveTop();
     popupSession.shown(anchor);
     lastUnsupported='';setStatus({...readyPhase(),lastLookupMs:Date.now()-started});
     vlcBridge?.hold(source);
@@ -170,7 +176,7 @@ function startNative(){
       case 'cursor':{
         popupSession.noteScan(event.sequence);if(!popupSession.accepts(event))break;
         lastCursor={x:event.x,y:event.y};const p=screen.screenToDipPoint(lastCursor);
-        if(popup?.isVisible()&&contained(p,popup.getBounds()))break;
+        if(popupVisible()&&contained(p,popup.getBounds()))break;
         popupSession.begin(p);
         if(event.delegated)vlcBridge?.cursor(event).then(found=>{if(found===false&&popupSession.accepts(event)){if(preferences.ocrEnabled)requestOcr(event);else popupSession.empty();}}).catch(()=>{if(popupSession.accepts(event)){if(preferences.ocrEnabled)requestOcr(event);else popupSession.empty();}});
         break;
@@ -185,12 +191,13 @@ function startNative(){
         }else if(event.data)lookup({...event.data,nativeGesture:event.gesture,nativeSequence:event.sequence});else popupSession.empty();
         break;
       }
-      case 'escape':if(popupSession.active||popup?.isVisible())hidePopup();break;
-      case 'pointer-down':if(popup?.isVisible()&&!contained(screen.screenToDipPoint({x:event.x,y:event.y}),popup.getBounds()))hidePopup();break;
+      case 'escape':if(popupSession.active||popupVisible())hidePopup();break;
+      case 'pointer-down':if(popupVisible()){if(!contained(screen.screenToDipPoint({x:event.x,y:event.y}),popup.getBounds()))hidePopup();}break;
       case 'foreground':if(event.pid!==process.pid&&(event.pid!==lastSourcePid||(lastSourceWindow&&event.hwnd!==lastSourceWindow)))hidePopup();break;
       case 'vlc-windows':vlcBridge?.windows(event.windows);break;
       case 'heartbeat':if(event.busy){if(!nativeBusySince)nativeBusySince=Date.now();}else nativeBusySince=0;break;
       case 'provider-error':log('provider-error',event.error);break;
+      case 'raise-app':log('raise-anki',event.result);break;
     }
   });
   native.on('exit',()=>{hidePopup();setStatus({native:false});if(!shuttingDown){log('native-restart');setTimeout(startNative,1000);}});
@@ -277,6 +284,9 @@ else{
   app.on('second-instance',()=>mainWindow?.show());
   ipcMain.handle('desktop:command',handleCommand);
   ipcMain.on('desktop:close-popup',e=>{if(popup?.webContents===e.sender)hidePopup();});
+  ipcMain.on('desktop:popup-log',(e,event,details)=>{if(popup?.webContents===e.sender)log(String(event),details);});
+  // "View added note": Anki opens its window behind the others, the reader brings it to the front.
+  ipcMain.on('desktop:raise-anki',e=>{if(popup?.webContents===e.sender&&native?.stdin?.writable){native.stdin.write(JSON.stringify({raiseApp:'anki'})+'\n');setTimeout(hidePopup,400);}});
   ipcMain.on('desktop:subtitle-hit',(e,payload)=>{if(vlcBridge?.owns(e.sender))lookup(payload);});
   app.on('window-all-closed',()=>{});
   app.on('before-quit',()=>{shuttingDown=true;popupSession.reset();clearInterval(watchdog);globalShortcut.unregisterAll();vlcBridge?.close();if(native){native.stdin?.end();native.kill();}});
@@ -284,7 +294,7 @@ else{
     Menu.setApplicationMenu(null);createMain();if(!testMode)createTray();
     try{
       await startEngine();
-      if(testMode){await require(process.env.YOMIDESKTOP_SETUP_TEST?'./tests/setup-smoke.cjs':'./tests/integration.cjs').run({app,engine,popup,popupSession,bridge,lookup,data,root,status,mainWindow});const stale=path.join(data,'self-test-error.txt');if(fs.existsSync(stale))fs.unlinkSync(stale);app.quit();return;}
+      if(testMode){await require(process.env.YOMIDESKTOP_SETUP_TEST?'./tests/setup-smoke.cjs':process.env.YOMIDESKTOP_POPUP_BUTTONS?'./tests/popup-buttons.cjs':'./tests/integration.cjs').run({app,engine,popup,popupSession,popupVisible,bridge,lookup,data,root,status,mainWindow});const stale=path.join(data,'self-test-error.txt');if(fs.existsSync(stale))fs.unlinkSync(stale);app.quit();return;}
       const {VlcBridge}=require('./vlc.cjs');vlcBridge=new VlcBridge({root,data,source:__dirname,createWindow:(opts)=>{const w=new BrowserWindow(windowOptions(opts));safeWeb(w);return w;},attachOwner:(w,target)=>new Promise(resolve=>{if(!native?.stdin?.writable){resolve(false);return;}const hwnd=Number(w.getNativeWindowHandle().readBigUInt64LE(0)),key=String(hwnd);ownerRequests.set(key,resolve);sendOwnPids();native.stdin.write(JSON.stringify({ownerWindow:hwnd,owner:target.hwnd})+'\n');setTimeout(()=>{if(ownerRequests.delete(key))resolve(false);},1500);}),setStatus,lookup,hidePopup,screen,dialog});await vlcBridge.start();
       startNative();log('application-ready');watchdog=setInterval(()=>{if(nativeBusySince&&Date.now()-nativeBusySince>7000){log('provider-timeout');nativeBusySince=0;native?.kill();}},1000);
     }catch(e){log('startup-error',e.stack||errorMessage(e));setStatus({phase:errorMessage(e),phaseKey:null,ready:false,error:true});if(testMode){fs.writeFileSync(path.join(data,'self-test-error.txt'),e.stack||String(e));app.exit(1);}else mainWindow.show();}

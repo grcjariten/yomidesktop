@@ -57,5 +57,12 @@ await Application.main(true,async(application)=>{
   };
   window.desktopHost.onLookup(async(payload)=>{await window.yomiDesktop.lookup(payload);});
   document.addEventListener('keydown',(e)=>{if(e.key==='Escape'){e.preventDefault();window.desktopHost.closePopup();}});
+  // Diagnostics in data/diagnostics.log: errors, audio that fails to play and popup notices.
+  addEventListener('error',e=>window.desktopHost.log('popup-js-error',e.message));
+  addEventListener('unhandledrejection',e=>window.desktopHost.log('popup-js-error',e.reason?.message||String(e.reason)));
+  {const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){const src=String(this.src).slice(0,80);const p=play.call(this);p.then(()=>{},e=>window.desktopHost.log('popup-audio','failed '+e.name+' '+e.message+' '+src));return p;};}
+  new MutationObserver(()=>{for(const n of document.querySelectorAll('.footer-notification'))if(n.getClientRects().length&&n.dataset.logged!==n.textContent){n.dataset.logged=n.textContent;window.desktopHost.log('popup-notice',n.textContent.trim());}}).observe(document.body,{childList:true,subtree:true,characterData:true});
+  // "View added note" (button, or a note chosen from its Shift+click menu): Anki's window must come to the front.
+  document.addEventListener('click',(e)=>{const t=e.target instanceof Element?e.target:null;if(!t)return;if((t.closest('[data-action="view-note"]')&&!e.shiftKey)||t.closest('.view-note-button-popup-menu .popup-menu-item'))window.desktopHost.raiseAnki();},true);
   document.documentElement.dataset.loaded='true';window.desktopHost.ready();
 });

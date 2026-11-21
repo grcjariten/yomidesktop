@@ -1,4 +1,4 @@
-# YomiDesktop 2.2
+# YomiDesktop 2.3
 
 Apri **YomiDesktop.exe** o il collegamento sul desktop. Punta una parola giapponese e premi **Shift**. Il popup usa il motore originale di Yomitan e i tuoi otto dizionari.
 

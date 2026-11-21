@@ -42,6 +42,33 @@ public static class TextProbe {
     [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc cb,IntPtr arg);
     [DllImport("user32.dll")] static extern bool EnumChildWindows(IntPtr h,EnumProc cb,IntPtr arg);
     delegate bool EnumProc(IntPtr h,IntPtr arg);
+    [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+    [DllImport("user32.dll")] static extern bool BringWindowToTop(IntPtr h);
+    [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h,int command);
+    [DllImport("user32.dll")] static extern bool AttachThreadInput(uint attach,uint to,bool on);
+    [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h,IntPtr after,int x,int y,int cx,int cy,uint flags);
+    // Anki opens "View added note" behind the other windows (Windows blocks focus stealing):
+    // bring its top window to the front, a few times while it is still opening.
+    static void RaiseApp(string name){
+        string result="not-found";
+        try{foreach(int delay in new[]{350,500,700}){
+            Thread.Sleep(delay);
+            IntPtr found=IntPtr.Zero;
+            var pids=new HashSet<uint>();foreach(var proc in Process.GetProcessesByName(name)){pids.Add((uint)proc.Id);proc.Dispose();}if(pids.Count==0){result="no-anki";break;}
+            EnumWindows((h,arg)=>{if(!IsWindowVisible(h))return true;uint pid;GetWindowThreadProcessId(h,out pid);if(pids.Contains(pid)&&WindowTitle(h).Length>0){found=h;return false;}return true;},IntPtr.Zero);
+            if(found==IntPtr.Zero)continue;
+            IntPtr fg=GetForegroundWindow();if(fg==found){result="front";break;}
+            uint ignored,fgThread=GetWindowThreadProcessId(fg,out ignored),me=GetCurrentThreadId();
+            bool attached=fgThread!=0&&fgThread!=me&&AttachThreadInput(me,fgThread,true);
+            // Windows may refuse the focus: putting the window on top for a moment still shows it above the others.
+            try{if(IsIconic(found))ShowWindow(found,9);SetForegroundWindow(found);}
+            finally{if(attached)AttachThreadInput(me,fgThread,false);}
+            if(GetForegroundWindow()==found){result="focused";continue;}
+            SetWindowPos(found,new IntPtr(-1),0,0,0,0,0x43);SetWindowPos(found,new IntPtr(-2),0,0,0,0,0x43);
+            result="on-top";
+        }}catch(Exception e){result="error "+e.Message;}
+        Send(new{kind="raise-app",result=result});
+    }
     static JavaScriptSerializer json=new JavaScriptSerializer();
     static object io=new object();
     static HashSet<int> own=new HashSet<int>();
@@ -239,6 +266,7 @@ public static class TextProbe {
                     }
                     if(d.ContainsKey("quit")){exit=true;break;}
                     if(d.ContainsKey("pids")){lock(own){own.Clear();foreach(object v in (System.Collections.IEnumerable)d["pids"])own.Add(Convert.ToInt32(v));}}
+                    if(d.ContainsKey("raiseApp")&&Convert.ToString(d["raiseApp"])=="anki"){var raise=new Thread(()=>RaiseApp("anki"));raise.IsBackground=true;raise.Start();}
                     if(d.ContainsKey("ownerWindow")&&d.ContainsKey("owner")){long window=Convert.ToInt64(d["ownerWindow"]),owner=Convert.ToInt64(d["owner"]);uint pid;GetWindowThreadProcessId(new IntPtr(window),out pid);bool allowed;lock(own)allowed=own.Contains((int)pid);Send(new{kind="owner-attached",window=window,ok=allowed&&AttachOwner(window,owner,(int)pid)});}
                 }catch{}
             }

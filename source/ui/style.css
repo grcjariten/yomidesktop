@@ -41,6 +41,9 @@ input:not([type=checkbox]){display:block;margin-top:6px;width:100%;padding:8px 1
 footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:2px 0 6px}
 .check{display:flex;align-items:center;gap:7px;font-size:12px}
 .note{font-size:11px;color:#7e8a9e;margin-top:8px}
+.promo{display:flex;align-items:center;gap:10px;width:100%;margin-top:14px;padding:7px 10px;background:transparent;border:1px solid #ffffff14;color:#9ba5b7;font-weight:500;text-align:left}
+.promo:hover{background:#ffffff08;color:#cbd6e7}
+.promo img{border-radius:50%;flex:none}
 /* Switch */
 .switch{position:relative;display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:#cfd7e4;user-select:none}
 header .switch{margin-left:auto}

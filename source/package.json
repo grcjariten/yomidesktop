@@ -1,7 +1,7 @@
 {
   "name": "yomidesktop",
   "productName": "YomiDesktop",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "main": "main.cjs",
   "license": "GPL-3.0-or-later",
   "description": "Dizionario desktop con testo diretto, OCR locale e motore Yomitan"

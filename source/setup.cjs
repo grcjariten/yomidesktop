@@ -16,9 +16,11 @@ function installedIds(dictionaries){
   const titles=(dictionaries||[]).map(d=>String(d.title||''));
   return suggestedDictionaries.filter(d=>titles.some(t=>d.match.test(t))).map(d=>d.id);
 }
-// Only these pages can be opened from the wizard.
+// Only these pages can be opened from the wizard and the panel.
 const ankiLinks={
   anki:'https://apps.ankiweb.net/',
   ankiconnect:'https://ankiweb.net/shared/info/2055492159',
+  // Small link at the bottom of the panel: the author's grammar app.
+  perapera:'https://play.google.com/store/apps/details?id=com.grcsoft.perapera',
 };
 module.exports={suggestedDictionaries,installedIds,ankiLinks};

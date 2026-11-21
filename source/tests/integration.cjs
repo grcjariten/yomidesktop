@@ -1,5 +1,5 @@
 const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
-exports.run=async({engine,popup,popupSession,bridge,lookup,data,root,mainWindow})=>{
+exports.run=async({engine,popup,popupSession,popupVisible,bridge,lookup,data,root,mainWindow})=>{
   const results=[];const counts=await bridge('counts');assert.equal(counts.terms,1096281);assert.equal(counts.termMeta,2320013);results.push({name:'Migrazione completa',counts});
   const info=await bridge('dictionaries');assert.equal(info.length,8);results.push({name:'Otto dizionari',dictionaries:info.map(d=>d.title)});
   for(const [source,expected] of [['食べました','食べる'],['日本語','日本語'],['取り戻した','取り戻す'],['勉強しています','勉強']]){
@@ -53,18 +53,18 @@ exports.run=async({engine,popup,popupSession,bridge,lookup,data,root,mainWindow}
     const {screen}=require('electron');const area=screen.getPrimaryDisplay().workArea;
     const point=screen.dipToScreenPoint({x:area.x+100,y:area.y+100});
     const source={...payload,source:'Verifica chiusura',x:point.x,y:point.y,rect:{x:point.x,y:point.y,width:20,height:20}};
-    await lookup(source);assert(popup.isVisible());
+    await lookup(source);assert(popupVisible());
     let bounds=popup.getBounds();popupSession.pointer({x:bounds.x+20,y:bounds.y+20});
-    await new Promise(r=>setTimeout(r,230));assert(popup.isVisible(),'Popup must stay open while pointer is inside');
+    await new Promise(r=>setTimeout(r,230));assert(popupVisible(),'Popup must stay open while pointer is inside');
     popupSession.pointer({x:bounds.x+bounds.width+50,y:bounds.y+bounds.height+50});
-    await new Promise(r=>setTimeout(r,230));assert(!popup.isVisible(),'Pointer exit must close popup without holding Shift');
-    await lookup(source);assert(popup.isVisible());popupSession.shiftDown(10);assert(!popup.isVisible(),'Second Shift must close popup');
-    await lookup({...source,nativeGesture:10,nativeSequence:1});assert(!popup.isVisible(),'Closed popup must not reopen on a late result');
+    await new Promise(r=>setTimeout(r,230));assert(!popupVisible(),'Pointer exit must close popup without holding Shift');
+    await lookup(source);assert(popupVisible());popupSession.shiftDown(10);assert(!popupVisible(),'Second Shift must close popup');
+    await lookup({...source,nativeGesture:10,nativeSequence:1});assert(!popupVisible(),'Closed popup must not reopen on a late result');
     await lookup({...source,provider:'OCR.PP-OCRv6',text:'日本語',offset:0,rect:{x:point.x+25,y:point.y+25,width:18,height:18}});
-    await new Promise(r=>setTimeout(r,750));assert(popup.isVisible(),'OCR geometry must not dismiss its own scan point');
+    await new Promise(r=>setTimeout(r,750));assert(popupVisible(),'OCR geometry must not dismiss its own scan point');
     popupSession.pointer({x:area.x+102,y:area.y+100});popupSession.empty();
-    await new Promise(r=>setTimeout(r,250));assert(popup.isVisible(),'Missed OCR scan near source must keep the valid result');
-    popupSession.pointer({x:area.x+900,y:area.y+700});await new Promise(r=>setTimeout(r,230));assert(!popup.isVisible());
+    await new Promise(r=>setTimeout(r,250));assert(popupVisible(),'Missed OCR scan near source must keep the valid result');
+    popupSession.pointer({x:area.x+900,y:area.y+700});await new Promise(r=>setTimeout(r,230));assert(!popupVisible());
     results.push({name:'Chiusura reale popup',pointerExit:true,shiftToggle:true,lateResultRejected:true,manualMeaning:note.note.fields['Word Meaning']==='',ocrStableForMs:1000,missedOcrScanPreserved:true});
   }
   if(process.env.YOMIDESKTOP_ZORDER_REGRESSION){
@@ -77,7 +77,7 @@ exports.run=async({engine,popup,popupSession,bridge,lookup,data,root,mainWindow}
       blocker.showInactive();blocker.moveTop();
       const p=screen.dipToScreenPoint({x:area.x+60,y:area.y+60});
       const source={...payload,source:'Verifica primo piano',x:p.x,y:p.y,rect:{x:p.x,y:p.y,width:20,height:20}};
-      await lookup(source);assert(popup.isVisible());assert(!popup.isFocused(),'Lookup must not steal focus');
+      await lookup(source);assert(popupVisible());assert(!popup.isFocused(),'Lookup must not steal focus');
       const b=popup.getBounds(),probe=screen.dipToScreenPoint({x:b.x+30,y:b.y+30});
       const first=await topAt(probe);assert.equal(first.window,popupHandle,'Popup must cover another always-on-top window');
       blocker.moveTop();const covered=await topAt(probe);assert.equal(covered.window,blockerHandle,'Regression setup must cover popup');

@@ -46,7 +46,7 @@ function captureMouse(e){
   host.command('set-key',{key:'custom',code:button[0],label:t(button[1])}).catch(()=>{}).finally(closeKeyMenu);
 }
 $('custom-key').onclick=()=>{$('key-capture').hidden=false;$('custom-key').blur();addEventListener('keydown',captureKey,true);addEventListener('mousedown',captureMouse,true);};
-$('wizard').onclick=()=>host.command('open-setup');$('settings').onclick=()=>host.command('settings');
+$('wizard').onclick=()=>host.command('open-setup');$('perapera').onclick=()=>host.command('open-link',{id:'perapera'});$('settings').onclick=()=>host.command('settings');
 $('autostart').onchange=()=>host.command('start-at-login',{enabled:$('autostart').checked});
 $('ocr-toggle').onchange=()=>host.command('ocr-toggle',{enabled:$('ocr-toggle').checked});
 for(const [id,action] of [['anki-test','anki-test'],['anki-prepare','anki-prepare']])$(id).onclick=async()=>{const b=$(id);b.disabled=true;$('anki-result').textContent=t('anki.connecting');try{const r=await host.command(action,{server:$('anki-server').value,key:$('anki-key').value,deck:$('anki-deck').value});$('anki-result').textContent=r.ok===false?r.message:t(action==='anki-test'?'anki.answers':'anki.ready');}catch(e){$('anki-result').textContent=e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/,'');}finally{b.disabled=false;}};
