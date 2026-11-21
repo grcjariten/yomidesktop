@@ -1,4 +1,4 @@
-# YomiDesktop 2.3
+# YomiDesktop 2.4
 
 Apri **YomiDesktop.exe** o il collegamento sul desktop. Punta una parola giapponese e premi **Shift**. Il popup usa il motore originale di Yomitan e i tuoi otto dizionari.
 
@@ -36,8 +36,8 @@ Il pulsante di aggiunta nel popup funziona con Anki aperto. Per cambiare collega
 
 ## VLC
 
-Il modulo è compilato per VLC 3.0.x a 32 bit presente sul PC. Basta aprire normalmente i video in VLC. La consultazione usa i caratteri originali dei sottotitoli testuali. Se il testo originale non è disponibile, il programma può ripiegare sull’OCR dei sottotitoli visibili, compresi quelli impressi nel video.
+YomiDesktop collega da solo il suo modulo a VLC 3.0.x, a 32 o a 64 bit, senza permessi di amministratore: lo aggiunge a `VLC_PLUGIN_PATH` dell’utente e lo attiva nel file `vlcrc` (l’originale è salvato in `data/installation-backup`). Basta aprire normalmente i video in VLC; la prima volta va riaperto VLC dopo l’avvio di YomiDesktop. La consultazione usa i caratteri originali dei sottotitoli testuali. Se il testo originale non è disponibile, il programma può ripiegare sull’OCR dei sottotitoli visibili, compresi quelli impressi nel video.
 
-Se cambi architettura o versione di VLC, il modulo va verificato e ricompilato. Per ASS conserva testo e impaginazione di base, ma non riproduce tutti gli effetti tipografici animati complessi.
+Se passi da VLC a 32 bit a quello a 64 bit (o viceversa), YomiDesktop sceglie il modulo giusto al successivo avvio. La disinstallazione toglie il collegamento. Per ASS conserva testo e impaginazione di base, ma non riproduce tutti gli effetti tipografici animati complessi.
 
 Mantieni la cartella completa: programma, runtime, dati e `ocr-runtime` sono necessari. Il codice è in `source`; i risultati e i limiti delle verifiche sono in `VERIFICA.md`.

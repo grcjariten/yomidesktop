@@ -51,7 +51,7 @@ A small **OCR** label in the popup tells you when the text came from recognition
 - **Guided setup:** a short wizard picks your key, installs the recommended dictionaries and connects Anki step by step. You can run it again any time.
 - **Your Yomitan dictionaries:** import any Yomitan-format dictionary (JMdict/Jitendex, frequency lists, pitch accent…) and keep their order and settings.
 - **Anki in one click:** works with AnkiConnect, with the same card setup as Yomitan, plus the word's frequency and its source (video title or window name) in the notes.
-- **VLC integration:** open videos normally or from YomiDesktop and look up words directly in the subtitles.
+- **VLC integration:** open videos in VLC as usual and look up words directly in the subtitle text (SRT, ASS/SSA). YomiDesktop connects itself to VLC, 32 or 64 bit, no admin rights needed. Image subtitles (PGS, VobSub) and burned-in ones go through OCR.
 - **Private and offline:** everything runs on your PC. Screen areas are processed in memory and never saved or sent anywhere. No account, no cloud, no clipboard tricks.
 - **Lives in the tray:** starts with Windows if you want, and stays out of your way until you press your key. Turn it off with the switch in the panel or **Turn off** in the tray menu: the tray icon turns black and white.
 
@@ -88,7 +88,7 @@ You can untick any of them, or import any other Yomitan dictionary later from **
 - OCR can still miss very small, blurry or heavily stylized characters.
 - Windows that block screen capture (some DRM video players, protected apps) can't be read.
 - Exclusive fullscreen games may hide the popup: use borderless or windowed fullscreen.
-- The VLC module targets VLC 3.0.x 32-bit.
+- The VLC module targets VLC 3.0.x (32 and 64 bit). Restart VLC once after the first start of YomiDesktop.
 
 ## Build from source
 

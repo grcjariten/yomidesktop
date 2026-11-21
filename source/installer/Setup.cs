@@ -109,9 +109,36 @@ static class Setup
         using (var run = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
             if (run != null) foreach (string name in run.GetValueNames())
                     if ((run.GetValue(name) as string ?? "").IndexOf(folder, StringComparison.OrdinalIgnoreCase) >= 0) run.DeleteValue(name, false);
+        RemoveVlcIntegration(folder);
         Registry.CurrentUser.DeleteSubKeyTree(UninstallKey, false);
         MessageBox.Show("YomiDesktop has been uninstalled.", AppName, MessageBoxButtons.OK, MessageBoxIcon.Information);
         return 0;
+    }
+
+    // Undo what the app sets up for VLC: its module folder in VLC_PLUGIN_PATH and the yomidesktop lines in vlcrc.
+    static void RemoveVlcIntegration(string folder)
+    {
+        try
+        {
+            string current = Environment.GetEnvironmentVariable("VLC_PLUGIN_PATH", EnvironmentVariableTarget.User) ?? "";
+            var kept = current.Split(';').Where(p => p.Length > 0 && p.IndexOf(folder, StringComparison.OrdinalIgnoreCase) < 0).ToArray();
+            if (kept.Length != current.Split(';').Count(p => p.Length > 0))
+                Environment.SetEnvironmentVariable("VLC_PLUGIN_PATH", kept.Length > 0 ? string.Join(";", kept) : null, EnvironmentVariableTarget.User);
+        }
+        catch { }
+        try
+        {
+            string config = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "vlc", "vlcrc");
+            if (!File.Exists(config)) return;
+            var lines = File.ReadAllLines(config).Where(l => !l.StartsWith("yomidesktop-token=") && l != "# YomiDesktop: direct subtitle text" && l != "# YomiDesktop: lettura diretta dei sottotitoli").Select(l =>
+            {
+                if (!l.StartsWith("sub-filter=")) return l;
+                var filters = l.Substring(11).Split(':').Where(f => f.Length > 0 && f != "yomidesktop").ToArray();
+                return filters.Length > 0 ? "sub-filter=" + string.Join(":", filters) : null;
+            }).Where(l => l != null).ToArray();
+            File.WriteAllLines(config, lines, new System.Text.UTF8Encoding(false));
+        }
+        catch { }
     }
 
     public static void Register(string folder, string version)

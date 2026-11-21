@@ -25,3 +25,15 @@ test('suggested dictionaries are recognised by title, including older names',()=
   assert.equal(suggestedDictionaries.length,8);assert(suggestedDictionaries.every(d=>/^https:\/\//.test(d.url)));
   assert.deepEqual(installedIds([{title:'Jitendex.org [2026-04-04]'},{title:'JPDBv2㋕'},{title:'Youtube'},{title:'Jiten'},{title:'Jiten (Drama)'}]).sort(),['jiten','jiten-drama','jiten-youtube','jitendex','jpdb']);
 });
+test('VLC setup: module folder per architecture, vlcrc filter and token, old folders replaced',()=>{
+  const vlc=require('../vlc-setup.cjs');const path=require('node:path');
+  assert.equal(vlc.exeArch(process.execPath),process.arch==='ia32'?'x86':'x64');
+  assert.equal(vlc.exeArch(__filename),null);
+  const folder=path.join(__dirname,'..','vlc-plugin','x64');
+  assert.deepEqual(vlc.pluginPath(['C:/Other/plugins','C:/Old/YomiDesktop/source/vlc-plugin','C:/Old/YomiDesktop/source/vlc-plugin/x86'],folder),['C:/Other/plugins',folder]);
+  const before='[core]\r\n#sub-filter=\r\nsub-filter=marq\r\nvolume=256\r\n';
+  const after=vlc.updateVlcrc(before,'a'.repeat(64));
+  assert.match(after,/\r\nsub-filter=marq:yomidesktop\r\n/);assert.match(after,/\r\nyomidesktop-token=a{64}\r\n/);assert.match(after,/#sub-filter=\r\n/);assert.match(after,/volume=256/);
+  assert.equal(vlc.updateVlcrc(after,'a'.repeat(64)),after,'Running twice changes nothing');
+  assert.match(vlc.updateVlcrc('','b'.repeat(64)),/^\r\n# YomiDesktop: direct subtitle text\r\nsub-filter=yomidesktop\r\nyomidesktop-token=b{64}\r\n$/);
+});

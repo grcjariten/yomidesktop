@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 'use strict';
 const dgram=require('node:dgram');const fs=require('node:fs');const path=require('node:path');const crypto=require('node:crypto');const {spawn}=require('node:child_process');
+const {ensureVlcIntegration}=require('./vlc-setup.cjs');
 const vlcCandidates=[path.join(process.env['ProgramFiles(x86)']||'C:/Program Files (x86)','VideoLAN/VLC/vlc.exe'),path.join(process.env.ProgramFiles||'C:/Program Files','VideoLAN/VLC/vlc.exe')];
 class VlcBridge{
   showOverlay(pid){const w=this.overlays.get(pid);if(!w||w.isDestroyed())return;if(!w.isVisible())w.showInactive();const owner=this.owners.get(pid);if(owner)try{w.moveAbove('window:'+owner+':0');}catch{}}
   constructor(host){Object.assign(this,host);this.targets=[];this.overlays=new Map();this.owners=new Map();this.loading=new Map();this.ended=new Set();this.events=new Map();this.serial=0;this.running=true;this.connected=false;this.tokenFile=path.join(this.data,'vlc-token');this.token=fs.existsSync(this.tokenFile)?fs.readFileSync(this.tokenFile,'utf8').trim():crypto.randomBytes(32).toString('hex');fs.writeFileSync(this.tokenFile,this.token);}
   async start(){
     this.executable=vlcCandidates.find(p=>fs.existsSync(p));
-    this.pluginDir=path.join(this.source,'vlc-plugin');
-    try{const installation=JSON.parse(fs.readFileSync(path.join(this.data,'installation.json'),'utf8').replace(/^\uFEFF/,''));if(installation.mode==='userEnvironment'&&fs.existsSync(installation.plugin))this.pluginDir=path.dirname(installation.plugin);}catch{}
-    if(this.executable){const installed=path.join(path.dirname(this.executable),'plugins','spu','libyomidesktop_plugin.dll');const local=path.join(this.source,'vlc-plugin','libyomidesktop_plugin.dll');this.installed=fs.existsSync(installed)&&crypto.createHash('sha256').update(fs.readFileSync(installed)).digest('hex')===crypto.createHash('sha256').update(fs.readFileSync(local)).digest('hex');}
+    this.pluginDir=path.join(this.source,'vlc-plugin','x64');this.installed=false;
+    // Connect the module matching this VLC (32 or 64 bit), so subtitles are read as text when VLC is opened normally.
+    if(this.executable){try{const r=ensureVlcIntegration({executable:this.executable,source:this.source,data:this.data,token:this.token});this.log?.('vlc-setup',JSON.stringify(r));if(r.ok){this.pluginDir=r.folder;this.installed=r.inVlc;}}catch(e){this.log?.('vlc-setup-error',e.message);}}
     this.socket=dgram.createSocket('udp4');this.socket.on('message',(raw,remote)=>this.message(raw,remote).catch(e=>{if(this.running)this.setStatus({vlc:'Collegamento VLC da riaprire: '+e.message});}));
     this.socket.on('error',e=>this.setStatus({vlc:'Collegamento VLC non disponibile: '+e.message}));
     await new Promise((resolve,reject)=>{this.socket.once('error',reject);this.socket.bind(19634,'127.0.0.1',()=>{this.socket.removeListener('error',reject);resolve();});});
@@ -52,7 +53,7 @@ class VlcBridge{
     if(!packet.suppressed)return;
     delete packet.token;entries.set(key,{...packet,title:target.title});this.updateOverlay(packet.pid);
     if(this.owners.has(target.pid)||target.foreground||this.heldPid===packet.pid)this.showOverlay(target.pid);
-    if(!this.connected){this.connected=true;this.setStatus({vlc:'Collegato · sottotitoli leggibili con Shift'});}
+    if(!this.connected){this.connected=true;this.log?.('vlc-connected','');this.setStatus({vlc:'Collegato · sottotitoli leggibili con Shift'});}
   }
   updateOverlay(pid){const w=this.overlays.get(pid);if(!w||w.isDestroyed())return;const packets=Array.from(this.events.get(pid)?.values()||[]);w.webContents.send('desktop:subtitle',packets);if(!packets.length)w.hide();}
   async cursor(point){
