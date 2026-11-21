@@ -62,9 +62,13 @@ If an app shows Japanese on screen, YomiDesktop can almost certainly read it.
     </td>
   </tr>
   <tr>
-    <td colspan="2" align="center" valign="top">
-      <img src="docs/screenshots/street-photo.png" alt="YomiDesktop popup on a shop banner in a street photo" width="600">
+    <td width="50%" align="center" valign="top">
+      <img src="docs/screenshots/street-photo.png" alt="YomiDesktop popup on a shop banner in a street photo">
       <br><sub>📷 <strong>Photos</strong> — signs and banners in pictures you're browsing</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <img src="docs/screenshots/stylized-title.png" alt="YomiDesktop popup on a hand-drawn, tilted kanji title in an image">
+      <br><sub>✍️ <strong>Messy lettering</strong> — hand-drawn, tilted kanji in a picture</sub>
     </td>
   </tr>
 </table>
