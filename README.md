@@ -15,7 +15,10 @@ Anywhere on your Windows screen — videos, games, visual novels, chats, images,
 </p>
 <p align="center"><sub>Always the latest version · free · no account · <a href="https://github.com/grcjariten/yomidesktop/releases/latest/download/YomiDesktop-Windows-x64.zip">portable ZIP</a></sub></p>
 
-<!-- Screenshots coming soon -->
+<p align="center">
+  <img src="docs/screenshots/game.jpg" alt="YomiDesktop popup over the menu of a PC game, read with OCR" width="820">
+  <br><sub><em>A game menu: no text to grab, so the local OCR reads the pixels — and the game keeps running.</em></sub>
+</p>
 
 ---
 
@@ -36,6 +39,35 @@ Hover any Japanese word, in any program, press **Shift** (or Ctrl, Alt, any othe
 | 🌐 **Browsers, PDFs, Office, any app** | Uses the text Windows already exposes, character by character. |
 
 If an app shows Japanese on screen, YomiDesktop can almost certainly read it.
+
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <img src="docs/screenshots/vlc.png" alt="YomiDesktop popup on text inside a video playing in VLC">
+      <br><sub>🎬 <strong>VLC</strong> — even text burned into the video</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <img src="docs/screenshots/manga.png" alt="YomiDesktop popup on a manga page">
+      <br><sub>📖 <strong>Manga</strong> — speech bubbles, vertical text, furigana</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <img src="docs/screenshots/wallpaper.png" alt="YomiDesktop popup on a handwritten izakaya menu used as desktop wallpaper">
+      <br><sub>🖼️ <strong>Your wallpaper</strong> — a handwritten izakaya menu, straight off the desktop</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <img src="docs/screenshots/telegram.png" alt="YomiDesktop popup on a Telegram chat">
+      <br><sub>💬 <strong>Telegram</strong> — look up words without leaving the chat</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center" valign="top">
+      <img src="docs/screenshots/street-photo.png" alt="YomiDesktop popup on a shop banner in a street photo" width="600">
+      <br><sub>📷 <strong>Photos</strong> — signs and banners in pictures you're browsing</sub>
+    </td>
+  </tr>
+</table>
 
 ## How it works
 
