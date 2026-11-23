@@ -30,6 +30,10 @@ button.link{background:none;border:none;color:#84b7f5;padding:0 4px;text-decorat
 .good{color:#94ecc4}
 .bad{color:#ffb5a9}
 .check.big{font-size:13px;margin-top:22px}
+.install-box{margin-top:22px;padding:4px 16px 14px;border:1px solid #ffffff1a;border-radius:10px;background:#ffffff08}
+.install-box .check.big{margin-top:12px;font-weight:600}
+.install-box .hint{margin:4px 0 10px 24px}
+.install-box progress{width:100%}
 .wizard-nav{display:flex;align-items:center;gap:10px}
 .wizard-nav #nav-note{margin-right:auto;font-size:11px;color:#8d99ad}
 .wizard-nav #next{padding:10px 22px;font-size:13px}

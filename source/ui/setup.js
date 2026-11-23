@@ -15,13 +15,21 @@ function show(index){
   current=index;steps.forEach((s,i)=>{s.hidden=i!==index;});
   pills.forEach((p,i)=>{p.classList.toggle('current',i===index-1);p.classList.toggle('done',i<index-1);});
   $('back').hidden=index===0;$('skip').hidden=index!==3;
-  $('next').textContent=t(index===2?'setup.install':index===3?'setup.prepare':index===4?'setup.finish':'setup.next');
+  $('next').textContent=t(index===2||(index===0&&installWanted())?'setup.install':index===3?'setup.prepare':index===4?'setup.finish':'setup.next');
+  if(index===0){$('install-box').hidden=!info?.install;$('installed-note').hidden=!info?.justInstalled;}
   $('nav-note').textContent='';
   if(index===2){renderDictionaries();if(info?.engineReady)loadInfo().then(()=>{if(current===2&&!busy)renderDictionaries();}).catch(()=>{});}
   if(index===4)$('final-key').textContent=keyLabel[selectedKey()]||info?.scanKeyLabel||'Shift';
   steps[index].querySelector('input,button')?.focus();
 }
 function setBusy(value,note=''){busy=value;$('next').disabled=value;$('back').disabled=value;$('skip').disabled=value;$('nav-note').textContent=note;}
+const installWanted=()=>Boolean(info?.install)&&$('install-app').checked;
+$('install-app').onchange=()=>{$('install-desktop').disabled=!$('install-app').checked;if(current===0)show(0);};
+async function installApp(){
+  setBusy(true,t('setup.dontClose'));$('install-progress').hidden=false;$('install-status').className='';$('install-status').textContent=t('setup.installing',{pct:0});
+  try{await host.command('install-app',{desktop:$('install-desktop').checked});$('install-bar').value=100;$('install-status').textContent=t('setup.installRestart');return true;}
+  catch(e){setBusy(false);$('install-status').className='bad';$('install-status').textContent=t('setup.installFail')+e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/,'');return false;}
+}
 const selectedKey=()=>document.querySelector('input[name=key]:checked')?.value;
 
 async function loadInfo(){
@@ -80,6 +88,8 @@ async function prepareAnki(){
 
 $('next').onclick=async()=>{
   if(busy)return;
+  // The installed copy restarts on its own and the setup goes on there.
+  if(current===0&&installWanted()){await installApp();return;}
   if(current===1&&selectedKey()){setBusy(true);try{await host.command('set-key',{key:selectedKey()});}finally{setBusy(false);}}
   if(current===2&&!(await installDictionaries()))return;
   if(current===3&&!(await prepareAnki()))return;
@@ -91,6 +101,6 @@ $('skip').onclick=()=>{if(!busy)show(4);};
 $('anki-check').onclick=()=>checkAnki();
 $('copy-code').onclick=async()=>{try{await navigator.clipboard.writeText('2055492159');$('copy-code').textContent=t('setup.copied');}catch{$('copy-code').textContent=t('setup.copyFail');}};
 document.querySelectorAll('[data-link]').forEach(b=>{b.onclick=()=>host.command('open-link',{id:b.dataset.link});});
-host.onStatus(s=>{const p=s.setupProgress;if(p&&current===2){const part=p.part||0;$('dict-bar').value=Math.round((p.index+part)*100);$('dict-status').className='';$('dict-status').textContent=t(part<0.15?'setup.dictDownloading':'setup.dictProgress',{title:p.title,i:p.index+1,n:p.total,pct:Math.round(part*100)});}});
+host.onStatus(s=>{if(s.installProgress!==undefined&&busy&&current===0){$('install-bar').value=s.installProgress;$('install-status').textContent=t('setup.installing',{pct:s.installProgress});}const p=s.setupProgress;if(p&&current===2){const part=p.part||0;$('dict-bar').value=Math.round((p.index+part)*100);$('dict-status').className='';$('dict-status').textContent=t(part<0.15?'setup.dictDownloading':'setup.dictProgress',{title:p.title,i:p.index+1,n:p.total,pct:Math.round(part*100)});}});
 setLanguage('en');
 loadInfo().then(i=>{setLanguage(i.language);show(0);}).catch(()=>show(0));

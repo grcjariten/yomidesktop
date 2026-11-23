@@ -7,6 +7,13 @@
   <h2 data-i18n="setup.welcomeH"></h2>
   <p data-i18n="setup.welcomeP1"></p>
   <p data-i18n-html="setup.welcomeP2"></p>
+  <div id="install-box" class="install-box" hidden>
+    <label class="check big"><input type="checkbox" id="install-app" checked> <span data-i18n="setup.installApp"></span></label>
+    <p class="hint" data-i18n="setup.installWhy"></p>
+    <label class="check"><input type="checkbox" id="install-desktop" checked> <span data-i18n="setup.installDesktop"></span></label>
+    <div id="install-progress" class="progress-box" hidden><progress id="install-bar" max="100" value="0"></progress><p id="install-status" role="status"></p></div>
+  </div>
+  <p id="installed-note" class="hint good" hidden data-i18n="setup.installedNote"></p>
 </section>
 
 <section class="step" data-step="1" hidden>

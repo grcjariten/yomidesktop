@@ -7,6 +7,7 @@ const anki=require('./anki.cjs');
 const {suggestedDictionaries,installedIds,ankiLinks}=require('./setup.cjs');
 const {PopupSession}=require('./popup-session.cjs');
 const I18N=require('./ui/i18n.js');
+const selfInstall=require('./install.cjs');
 const root=process.env.YOMIDESKTOP_ROOT||(app.isPackaged?path.dirname(process.execPath):path.resolve(__dirname,'..'));
 const data=process.env.YOMIDESKTOP_DATA||path.join(root,'data');fs.mkdirSync(data,{recursive:true});
 app.setName('YomiDesktop');app.setPath('userData',path.join(data,'profile'));
@@ -234,7 +235,10 @@ async function handleCommand(event,name,payload={}){
     // Setup wizard
     case 'setup-info':{
       const installed=engineReady?installedIds(await bridge('dictionaries')):[];
-      return {scanKey:preferences.scanKey,scanKeyLabel:scanKey().label,language:preferences.language,dictionaries:suggestedDictionaries.map(({url,match,...d})=>({...d,kind:t('kind.'+d.kind),about:t('about.'+d.id),installed:installed.includes(d.id)})),engineReady,ankiServer:preferences.ankiServer,ankiDeck:preferences.ankiDeck,ankiAutoMeaning:Boolean(preferences.ankiAutoMeaning),ankiPrepared:Boolean(preferences.ankiPrepared),startAtLogin:Boolean(preferences.startAtLogin)};
+      // Offered only on the first run of a copy that is not in the install folder (the extracted ZIP).
+      const installFolder=await selfInstall.target();
+      const canInstall=!preferences.setupDone&&(app.isPackaged||Boolean(process.env.YOMIDESKTOP_INSTALL_TEST))&&!selfInstall.same(installFolder,root);
+      return {install:canInstall?{folder:installFolder}:null,justInstalled:process.argv.includes('--just-installed'),scanKey:preferences.scanKey,scanKeyLabel:scanKey().label,language:preferences.language,dictionaries:suggestedDictionaries.map(({url,match,...d})=>({...d,kind:t('kind.'+d.kind),about:t('about.'+d.id),installed:installed.includes(d.id)})),engineReady,ankiServer:preferences.ankiServer,ankiDeck:preferences.ankiDeck,ankiAutoMeaning:Boolean(preferences.ankiAutoMeaning),ankiPrepared:Boolean(preferences.ankiPrepared),startAtLogin:Boolean(preferences.startAtLogin)};
     }
     case 'set-key':{
       let next=String(payload.key);const previous=scanKey().yomitan;
@@ -258,6 +262,14 @@ async function handleCommand(event,name,payload={}){
         catch(e){results.push({id:d.id,ok:false,message:errorMessage(e)});log('setup-dictionary-error',d.title+' '+errorMessage(e));}
       }
       setStatus({setupProgress:null,dictionaries:await bridge('dictionaries'),dictionariesLoaded:true});return results;
+    }
+    case 'install-app':{
+      const result=await selfInstall.install({root,shell,desktopPath:app.getPath('desktop'),version:app.getVersion(),desktop:Boolean(payload.desktop),language:preferences.language,onProgress:pct=>setStatus({installProgress:pct})});
+      log('self-install',result.folder);
+      // The installed copy takes over: it has its own data folder, so it doesn't clash with this one.
+      // It starts once this one has fully closed, so the reader and the VLC port are free.
+      if(!testMode||process.env.YOMIDESKTOP_INSTALL_RELAUNCH){app.once('quit',()=>spawn(result.runtime,['--just-installed'],{cwd:result.folder,detached:true,stdio:'ignore'}).unref());setTimeout(()=>app.quit(),600);}
+      return {ok:true,folder:result.folder};
     }
     case 'open-link':{const url=ankiLinks[payload.id];if(!url)return false;shell.openExternal(url);return true;}
     case 'finish-setup':{
@@ -296,7 +308,7 @@ else{
     Menu.setApplicationMenu(null);createMain();if(!testMode)createTray();
     try{
       await startEngine();
-      if(testMode){await require(process.env.YOMIDESKTOP_SETUP_TEST?'./tests/setup-smoke.cjs':process.env.YOMIDESKTOP_POPUP_BUTTONS?'./tests/popup-buttons.cjs':'./tests/integration.cjs').run({app,engine,popup,popupSession,popupVisible,bridge,lookup,data,root,status,mainWindow});const stale=path.join(data,'self-test-error.txt');if(fs.existsSync(stale))fs.unlinkSync(stale);app.quit();return;}
+      if(testMode){await require(process.env.YOMIDESKTOP_INSTALL_SMOKE?'./tests/install-smoke.cjs':process.env.YOMIDESKTOP_SETUP_TEST?'./tests/setup-smoke.cjs':process.env.YOMIDESKTOP_POPUP_BUTTONS?'./tests/popup-buttons.cjs':'./tests/integration.cjs').run({app,engine,popup,popupSession,popupVisible,bridge,lookup,data,root,status,mainWindow});const stale=path.join(data,'self-test-error.txt');if(fs.existsSync(stale))fs.unlinkSync(stale);app.quit();return;}
       const {VlcBridge}=require('./vlc.cjs');vlcBridge=new VlcBridge({root,data,source:__dirname,createWindow:(opts)=>{const w=new BrowserWindow(windowOptions(opts));safeWeb(w);return w;},attachOwner:(w,target)=>new Promise(resolve=>{if(!native?.stdin?.writable){resolve(false);return;}const hwnd=Number(w.getNativeWindowHandle().readBigUInt64LE(0)),key=String(hwnd);ownerRequests.set(key,resolve);sendOwnPids();native.stdin.write(JSON.stringify({ownerWindow:hwnd,owner:target.hwnd})+'\n');setTimeout(()=>{if(ownerRequests.delete(key))resolve(false);},1500);}),setStatus,lookup,hidePopup,screen,dialog,log});await vlcBridge.start();
       startNative();log('application-ready');watchdog=setInterval(()=>{if(nativeBusySince&&Date.now()-nativeBusySince>7000){log('provider-timeout');nativeBusySince=0;native?.kill();}},1000);
     }catch(e){log('startup-error',e.stack||errorMessage(e));setStatus({phase:errorMessage(e),phaseKey:null,ready:false,error:true});if(testMode){fs.writeFileSync(path.join(data,'self-test-error.txt'),e.stack||String(e));app.exit(1);}else mainWindow.show();}
