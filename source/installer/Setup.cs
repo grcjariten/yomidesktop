@@ -82,7 +82,7 @@ static class Setup
     static int Uninstall(string folder)
     {
         folder = Path.GetFullPath(folder.Trim('"')).TrimEnd('\\');
-        if (!File.Exists(Path.Combine(folder, "YomiDesktopRuntime.exe")))
+        if (!File.Exists(Path.Combine(folder, "YomiDesktop.exe")) && !File.Exists(Path.Combine(folder, "YomiDesktopRuntime.exe")))
         {
             MessageBox.Show("YomiDesktop was not found in this folder:\n" + folder, AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return 1;

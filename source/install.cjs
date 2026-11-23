@@ -60,7 +60,9 @@ async function install({root,shell,desktopPath,version,desktop,language,onProgre
     ['UninstallString','REG_SZ',`"${uninstaller}" /uninstall "${folder}"`],['URLInfoAbout','REG_SZ','https://github.com/grcjariten/yomidesktop'],
     ['NoModify','REG_DWORD','1'],['NoRepair','REG_DWORD','1'],['EstimatedSize','REG_DWORD',String(Math.round(bytes/1024))]];
   for(const [name,type,value] of values)await run('reg',['add',uninstallKey,'/v',name,'/t',type,'/d',value,'/f']);
-  return {folder,runtime:path.join(folder,'YomiDesktopRuntime.exe')};
+  // Left over from versions up to 2.5.0 (YomiDesktop.exe is now the program itself).
+  await fsp.unlink(path.join(folder,'YomiDesktopRuntime.exe')).catch(()=>{});
+  return {folder,runtime:exe};
 }
 
 module.exports={target,install,same,uninstallKey};

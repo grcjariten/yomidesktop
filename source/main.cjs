@@ -293,6 +293,13 @@ async function handleCommand(event,name,payload={}){
     default:throw new Error(t('err.command'));
   }
 }
+// Up to 2.5.0 a tiny YomiDesktop.exe started YomiDesktopRuntime.exe (antivirus flagged the tiny one).
+// Now YomiDesktop.exe is the program itself: point "start at login" to it and remove the old file.
+function leaveOldLauncher(){
+  if(!app.isPackaged||path.basename(process.execPath).toLowerCase()!=='yomidesktop.exe')return;
+  if(preferences.startAtLogin)app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:['--background']});
+  fs.promises.unlink(path.join(root,'YomiDesktopRuntime.exe')).catch(()=>{});
+}
 if(!app.requestSingleInstanceLock()&&!testMode){app.quit();}
 else{
   app.on('second-instance',()=>mainWindow?.show());
@@ -305,7 +312,7 @@ else{
   app.on('window-all-closed',()=>{});
   app.on('before-quit',()=>{shuttingDown=true;popupSession.reset();clearInterval(watchdog);globalShortcut.unregisterAll();vlcBridge?.close();if(native){native.stdin?.end();native.kill();}});
   app.whenReady().then(async()=>{
-    Menu.setApplicationMenu(null);createMain();if(!testMode)createTray();
+    Menu.setApplicationMenu(null);createMain();if(!testMode){createTray();leaveOldLauncher();}
     try{
       await startEngine();
       if(testMode){await require(process.env.YOMIDESKTOP_INSTALL_SMOKE?'./tests/install-smoke.cjs':process.env.YOMIDESKTOP_SETUP_TEST?'./tests/setup-smoke.cjs':process.env.YOMIDESKTOP_POPUP_BUTTONS?'./tests/popup-buttons.cjs':'./tests/integration.cjs').run({app,engine,popup,popupSession,popupVisible,bridge,lookup,data,root,status,mainWindow});const stale=path.join(data,'self-test-error.txt');if(fs.existsSync(stale))fs.unlinkSync(stale);app.quit();return;}

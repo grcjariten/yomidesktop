@@ -10,11 +10,12 @@ New-Item -ItemType Directory -Force $Out | Out-Null
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 
 # Program files only: never the personal folders.
-robocopy $root $stage /E /NFL /NDL /NJH /NJS /NP /XD (Join-Path $root 'data') (Join-Path $root 'anki') (Join-Path $root 'archivio') (Join-Path $root 'verifica') $source (Join-Path $root '.git') __pycache__ /XF .gitignore VERIFICA.md LEGGIMI.md *.pdb *.lib *.log | Out-Null
+robocopy $root $stage /E /NFL /NDL /NJH /NJS /NP /XD (Join-Path $root 'data') (Join-Path $root 'anki') (Join-Path $root 'archivio') (Join-Path $root 'verifica') $source (Join-Path $root '.git') __pycache__ /XF .gitignore VERIFICA.md LEGGIMI.md YomiDesktopRuntime.exe *.pdb *.lib *.log | Out-Null
 if ($LASTEXITCODE -ge 8) { throw 'Copia del programma non riuscita' }
 # The program code is always the current source.
 robocopy $source (Join-Path $stage 'resources\app') /MIR /NFL /NDL /NJH /NJS /NP /XD installer /XF *.pdb *.lib | Out-Null
 if ($LASTEXITCODE -ge 8) { throw 'Copia del codice non riuscita' }
+if ((Get-Item (Join-Path $stage 'YomiDesktop.exe')).VersionInfo.OriginalFilename -ne 'YomiDesktop.exe') { throw 'YomiDesktop.exe is not the branded program: run native/build-app-exe.ps1' }
 foreach ($personal in 'data', 'anki') { if (Test-Path (Join-Path $stage $personal)) { throw "Cartella personale nel pacchetto: $personal" } }
 
 @'

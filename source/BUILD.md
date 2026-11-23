@@ -16,7 +16,7 @@ Il popup deve chiamare `moveTop()` dopo `showInactive()`, anche quando si ripete
 
 Telegram Desktop 7.4.1 espone i messaggi tramite celle di accessibilità senza TextInterface e con il rettangolo dell'intera riga. Il lettore TextPattern non può recuperare il carattere originale: la build 1.2 usa il fallback OCR locale sul testo visibile.
 
-Il pacchetto Windows mette il codice in `resources/app` e usa `native/Launcher.cs` per l’avvio. Le librerie del runtime e i dizionari sono necessari al funzionamento offline del motore. Il file `data/dictionary-import.json` riporta i conteggi verificati della migrazione. La cartella `data/profile` è dedicata all’applicazione e non coincide con il profilo del browser.
+Il pacchetto Windows mette il codice in `resources/app` e avvia direttamente `YomiDesktop.exe`: è `electron.exe` dell’archivio verificato con icona e nome di YomiDesktop (`native/build-app-exe.ps1 -Electron <electron.exe> -Out YomiDesktop.exe`). Niente avviatore intermedio: un piccolo exe che lancia un altro exe veniva segnalato dagli antivirus. Le librerie del runtime e i dizionari sono necessari al funzionamento offline del motore. Il file `data/dictionary-import.json` riporta i conteggi verificati della migrazione. La cartella `data/profile` è dedicata all’applicazione e non coincide con il profilo del browser.
 
 Per la migrazione Firefox, durante questa installazione sono stati decodificati solo i due database dell’origine Yomitan. I record sono stati trasferiti in blocchi con checksum SHA-256 e scritture idempotenti. Conteggi, contenuti strutturati, immagini dei dizionari e impostazioni sono stati verificati prima di segnare l’importazione come completa.
 
