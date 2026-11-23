@@ -11,9 +11,9 @@ Anywhere on your Windows screen — videos, games, visual novels, chats, images,
 </p>
 
 <p align="center">
-  <a href="https://github.com/grcjariten/yomidesktop/releases/latest/download/YomiDesktop-Setup.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for%20Windows-YomiDesktop%20Setup-2ea44f?style=for-the-badge&logo=windows&logoColor=white" height="44"></a>
+  <a href="https://github.com/grcjariten/yomidesktop/releases/latest/download/YomiDesktop-Windows-x64.zip"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for%20Windows-YomiDesktop%20ZIP-2ea44f?style=for-the-badge&logo=windows&logoColor=white" height="44"></a>
 </p>
-<p align="center"><sub>Always the latest version · free · no account · <a href="https://github.com/grcjariten/yomidesktop/releases/latest/download/YomiDesktop-Windows-x64.zip">portable ZIP</a></sub></p>
+<p align="center"><sub>Always the latest version · free · no account · nothing to install · or the <a href="https://github.com/grcjariten/yomidesktop/releases/latest/download/YomiDesktop-Setup.exe">installer</a></sub></p>
 
 <p align="center">
   <img src="docs/screenshots/game.jpg" alt="YomiDesktop popup over the menu of a PC game, read with OCR" width="820">
@@ -93,16 +93,24 @@ A small **OCR** label in the popup tells you when the text came from recognition
 
 ## Download and install
 
-1. **[Download YomiDesktop-Setup.exe](https://github.com/grcjariten/yomidesktop/releases/latest/download/YomiDesktop-Setup.exe)** — a tiny installer that always fetches the latest version.
-2. Run it. The app isn't signed yet, so Windows may say *"Windows protected your PC"*: click **More info → Run anyway**.
-3. Click **Install**. No administrator rights needed; it downloads about 500 MB and creates the shortcuts.
+1. **[Download the ZIP](https://github.com/grcjariten/yomidesktop/releases/latest/download/YomiDesktop-Windows-x64.zip)** (about 500 MB). Nothing to install.
+2. Right-click it → **Extract All**, and put the folder wherever you like.
+3. Open **YomiDesktop.exe** inside the folder. The app isn't signed yet, so Windows may say *"Windows protected your PC"*: click **More info → Run anyway**.
 4. The **guided setup** opens by itself:
    - **Key** — choose Shift, Ctrl or Alt (any other key or a mouse side button later, from the panel).
    - **Dictionaries** — the recommended set is already ticked: just press **Next**. They're downloaded from their official sources.
    - **Anki** — three short steps to connect it (install Anki, add AnkiConnect, check). Or skip.
 5. Point at Japanese text anywhere and press your key.
 
-Uninstall from **Windows Settings → Apps**, from **Start → Uninstall YomiDesktop**, or with `Uninstall.exe` in the program folder. Updating is just running the setup again: your dictionaries and settings are kept.
+To update, extract the new ZIP over the old folder: your dictionaries and settings are kept. To remove it, delete the folder.
+
+> **Antivirus blocking it?** It's a false alarm: the app is new and not signed yet, so some antivirus programs (Avast, AVG…) are wary of it. Use the ZIP above rather than the installer, and if it's still blocked, add the YomiDesktop folder as an exception in your antivirus.
+
+<details><summary>Prefer an installer?</summary>
+
+**[YomiDesktop-Setup.exe](https://github.com/grcjariten/yomidesktop/releases/latest/download/YomiDesktop-Setup.exe)** is a tiny installer that downloads the latest version (about 500 MB, no administrator rights) and creates the Start menu and desktop shortcuts. Updating is just running it again. Uninstall from **Windows Settings → Apps**, from **Start → Uninstall YomiDesktop**, or with `Uninstall.exe` in the program folder.
+
+</details>
 
 <details><summary>Recommended dictionaries</summary>
 
